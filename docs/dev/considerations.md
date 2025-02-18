@@ -1,0 +1,7 @@
+## Implementation Notes
+- I am not planning to implement any authentication for the admin interface at this time. Authentication will be handled via whatever methods are offered through the proxy being used (Caddy basic auth for local access or for remote access, Cloudflare Zero Trust's auth mechanism).
+  - Caddy basic auth password reset needs to be handled somehow... Am thinking either a recovery page on an unprotected path with an email password reset flow and/or a commandline flag that can be run if user has physical access to the appliance
+- Not really sure if I need to manage or care about the root and user passwords on the system. The admin will choose those when installing NixOS on the metal, and I could reset those when taking over the config as root. I guess it's just something I haven't yet put much thought into and will need to make a decision at some point along the way (likely deployment script).
+- HW Transcoding is a feature that is desired but is the lowest priority to implement
+- Limiting HW usage of the Immich containers could be something worth adding... would involve editing the compsoe file I think. When adding HW transcodes, this could be added asewll. Might not be necessary because this is a dedicated immich host but n-1 CPUs and n-0.5 GB RAM could be desired to keep other system operations responsive
+- [Need to run Immich as non-root](https://immich.app/docs/FAQ#how-can-i-run-immich-as-a-non-root-user) (and maybe protect against privilage escalation)
