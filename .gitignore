@@ -20,6 +20,10 @@
 !docs/dev/*.md
 !docs/setup/*.md
 
+!internal/templates/web/index.html
+
+!test/configuration.nix
+
 # !Makefile
 
 # ...even if they are in subdirectories

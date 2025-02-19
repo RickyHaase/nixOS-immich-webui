@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NixOS Admin</title>
+</head>
+<body>
+    <h1>NixOS Immich Host Admin Panel</h1>
+
+    <form action="/save" method="post">
+        <h2>System</h2>
+        <!-- TimeZone Picker -->
+        <label for="timezone">System Timezone:</label>
+        <select name="timezone" id="timezone">
+            <option value="America/New_York" {{if eq .TimeZone "America/New_York"}}selected{{end}}>Eastern Time (ET)</option>
+            <option value="America/Chicago" {{if eq .TimeZone "America/Chicago"}}selected{{end}}>Central Time (CT)</option>
+            <option value="America/Denver" {{if eq .TimeZone "America/Denver"}}selected{{end}}>Mountain Time (MT)</option>
+            <option value="America/Phoenix" {{if eq .TimeZone "America/Phoenix"}}selected{{end}}>Mountain Time - Arizona (MT)</option>
+            <option value="America/Los_Angeles" {{if eq .TimeZone "America/Los_Angeles"}}selected{{end}}>Pacific Time (PT)</option>
+        </select>
+        <!-- Auto Updates Picker -->
+        <label for="auto-updates">Enable Auto Updates:</label>
+        <select name="auto-updates" id="auto-updates">
+            <option value="true" {{if .AutoUpgrade}}selected{{end}}>Enabled</option>
+            <option value="false" {{if not .AutoUpgrade}}selected{{end}}>Disabled</option>
+        </select>
+        <!-- Select Auto-Update window -->
+        <label for="update-time">Select Auto-Update Start Time:</label>
+        <input type="time" id="update-time" name="update-time" value="{{.UpgradeTime}}">
+        <br><small>This is the start time of a 1-hour window. If available, updates could apply followed by a reboot sometime within 1 hour of slected time.</small>
+
+        <!-- <h2>Notifications (Gmail Only)</h2>
+        <p>[insert brief instructions with links to support docs]</p>
+        <label for="gmail-address">Gmail Address:</label>
+        <input type="email" id="gmail-address" name="gmail-address">
+        <label for="gmail-password">Gmail App Password:</label>
+        <input type="password" id="gmail-password" name="gmail-password"> -->
+
+        <h2>Immich</h2>
+        <!-- Start/Stop -->
+        <!-- This might be an interesting first implementation of HTMX -->
+        <button id="startStopButton" onclick="toggleStartStop()">Start</button>
+        <script>
+            function toggleStartStop() {
+                var button = document.getElementById('startStopButton');
+                if (button.innerHTML === 'Start') {
+                    button.innerHTML = 'Stop';
+                } else {
+                    button.innerHTML = 'Start';
+                }
+            }
+        </script>
+        <!-- Update -->
+        <button id="updateImmich" onclick="">Update</button>
+        <!-- Link to Immich -->
+        <a href="http://immich.local" target="_blank">Immich web interface</a>
+        <br><small>This is just a placeholder interface. Will implement after the rest of the interface is functional.</small>
+
+        <h2>Remote Access</h2>
+        <!-- Enable Tailscale -->
+        <label for="tailscale">Enable Tailsclae:</label>
+        <select name="tailscale" id="tailscale">
+            <option value="true" {{if .Tailscale}}selected{{end}}>Enabled</option>
+            <option value="false" {{if not .Tailscale}}selected{{end}}>Disabled</option>
+        </select>
+        <!-- Enter Tailscale Authkey -->
+        <label for="tailscale-authkey">Tailscale Authkey:</label>
+        <input type="text" id="tailscale-authkey" name="tailscale-authkey" value="{{.TSAuthkey}}" placeholder="tskey-auth-kV7bYL6CNTRL-GXXhAHWhHXAVTcumJyyxXAc2cyjxQ3QkD" pattern='tskey-auth-[a-zA-Z0-9-]+-[a-zA-Z0-9]+'>
+        <!-- Sign out Tailscale -->
+        <button id="signOutTailscaleButton" onclick="confirmSignOut()">Sign Out of Tailscale</button>
+        <script>
+            function confirmSignOut() {
+                if (confirm("This will immediately revoke keys and disable Tailscale. Are you sure?")) {
+                    // Add your sign-out logic here
+                    alert("Tailscale has been signed out.");
+                }
+            }
+        </script>
+        <!-- Button to enable tailscale serve for localhost:2283 -->
+        <!-- Button to enable tailscale funnel? What about Admin Panel? -->
+
+        <!-- <h2>Admin Pannel Security</h2>
+        <p>There is currently no way to reset this password if forgotten. Additionally, any eaves-droppers on the network can intercept this on submit and use it to gain access to administration of the server. It's barely secuirty, really only worth enabling to stop random roommates from stumbling upon the admin panel and goofing something up.</p>
+        <label for="admin-password">Admin Password:</label>
+        <input type="password" id="admin-password" name="admin-password"> -->
+
+        <h2>Backup to USB</h2>
+        <label for="select-disk">Select Disk:</label>
+        <select name="select-disk" id="select-disk">
+            <option value="usb-hdd-5tb">USB HDD 5TB</option>
+            <option value="usb-ssd-2tb">USB SSD 2TB</option>
+        </select>
+        <button id="refresh">Refresh List</button>
+        <button id="start-backup">Start Backup</button>
+        <br><small>This is just a placeholder interface. Will implement after the rest of the interface is functional.</small>
+
+        <h2>Save and Apply</h2>
+        <button type="submit" id="save">Save</button>
+        <!-- On save, it should write to .tmp and then pop up a modal asking if application is desirable. Upon apply, copy to .nix and run nixos-rebuild switch. Display loading/progress with success/error upon completion. Give option to revert changes or close. -->
+        <button type="submit" formaction="/apply" formmethod="post" id="apply">Apply</button>
+    </form>
+</body>
+</html>
