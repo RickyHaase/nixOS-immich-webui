@@ -46,11 +46,11 @@
   system.stateVersion = "24.11"; # Did you read the comment? TLDR; leave
 
   # ====== SYSTEM ======
-  time.timeZone = "America/Denver";
+  time.timeZone = "{{.TimeZone}}";
 
   # #Enable Unattended Upgrades
-  system.autoUpgrade.enable = true;
-  system.autoUpgrade.dates = "04:50";
+  system.autoUpgrade.enable = {{.AutoUpgrade}};
+  system.autoUpgrade.dates = "{{.UpgradeTime}}";
   system.autoUpgrade = {
     # flake = inputs.self.outPath;
     flags = [
@@ -60,9 +60,9 @@
     ];
     randomizedDelaySec = "15min";
   };
-  system.autoUpgrade.allowReboot = true;
-  system.autoUpgrade.rebootWindow.lower = "05:20";
-  system.autoUpgrade.rebootWindow.upper = "05:50";
+  system.autoUpgrade.allowReboot = {{.AutoUpgrade}};
+  system.autoUpgrade.rebootWindow.lower = "{{.UpgradeLower}}";
+  system.autoUpgrade.rebootWindow.upper = "{{.UpgradeUpper}}";
 
   # ====== NETWORKING ======
 
@@ -173,7 +173,7 @@
   };
 
   # ====== REMOTE ACCESS ======
-  services.tailscale.enable = false;
+  services.tailscale.enable = {{.Tailscale}};
 
   # create a oneshot job to authenticate to Tailscale
   systemd.services.tailscale-autoconnect = {
@@ -199,7 +199,7 @@
     fi
 
     # otherwise authenticate with tailscale
-    ${tailscale}/bin/tailscale up -authkey tskey-auth-kV7bYL6CNTRL-GXXhAHWhHXAVTcumJyyxXAc2cyjxQ3QkD --ssh
+    ${tailscale}/bin/tailscale up -authkey {{.TSAuthkey}} --ssh
     '';
     # Maybe add ssh and/or serve options
 

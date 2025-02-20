@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Confirmation Window</h1>
+    <p>The below configuration has been saved. Would you like to appy the configuration now?</p>
+    <table style="border: 1px solid; border-collapse: collapse;">
+        <tr>
+            <td style="border: 1px solid;">Time Zone</td>
+            <td style="border: 1px solid;">{{.TimeZone}}</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid;">Auto-update Enable</td>
+            <td style="border: 1px solid;">{{.AutoUpgrade}}</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid;">Update & Reboot Window</td>
+            <td style="border: 1px solid;">{{.UpgradeTime}} - {{.UpgradeUpper}}</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid;">Tailscale Enable</td>
+            <td style="border: 1px solid;">{{.Tailscale}}</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid;">TS Authkey</td>
+            <td style="border: 1px solid;">{{.TSAuthkey}}</td>
+        </tr>
+    </table>
+    <p>To apply, click the button below. If incorrect, feel free to hit the back button and revise. To discard, return to the <a href="/">admin panel</a>.</p>
+    <form action="/apply" method="post">
+        <button type="submit" id="apply">Apply</button>
+    </form>
+
+</body>
+</html>

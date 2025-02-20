@@ -21,6 +21,8 @@
 !docs/setup/*.md
 
 !internal/templates/web/index.html
+!internal/templates/web/save.html
+!internal/templates/nixos/configuration.nix
 
 !test/configuration.nix
 
