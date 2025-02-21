@@ -1,13 +1,18 @@
-# To-Dos
-## NixOS Server Management
-- [x] Split readme out into different pages in /docs/dev/ to keep things organized
-- [x] Build out a set of .nix files that define the desired state of the server and are organized and compartmentalized in a logical manner.
-  - [x] configuration.nix with nothing but the imports and default timezone, language, and regional settings configured during install.
-  - [x] system.nix with the systemd service for the web server
-  - [x] Additional .nix files as needed to hold the configs that will be modifiable via the web interface.
-  - [x] admin.nix for an advanced admin to have a file that won't be touched, allowing them to modify with any additional configs they may want.
-    - Perhaps this will be modifiable in an advanced option to enable/disable ssh but it will not overwrie the whole file, instead just updating the one relivant string
-- [ ] Convert those .nix files into templates within a .go file that is imported into the program and can be called from the writer function.
-- [ ] Build web pages that correspond to each .nix file and contain inputs to modify the parts of the server config that are necessary.
-- [ ] Structure the web server to read the existing config corresponding to each webpage on load, save the .tmp file on save, alert when leaving without applying, and copy to .nix and run a rebuild on reload.
-- [ ] Auto-rollback if nixos-rebuild fails. Auto-rollback if no web requests are accepted by the server within 60 seconds of new config being applied. Optional rollback to previously applied config if the admin is unhappy with any resulting changes.
+# Misc To-Dos
+These to-dos either pre-date the roadmap or have yet to be added to it. This list serves as an intermediary between the considerations page and the roadmap in the README.
+- [x] Split README into different pages in /docs/dev/ to keep things organized.
+- [x] Although the work has been done, only a monolithic Nix config file has been committed to the repo as it was manageable in one template and one page in the UI (so far).
+  - ~~Create a set of .nix files that define the desired state of the server, organized and compartmentalized logically.~~
+    - ~~configuration.nix with only the imports and default timezone, language, and regional settings configured during install.~~
+    - ~~system.nix with the systemd service for the web server.~~
+    - ~~Additional .nix files as needed to hold the configs that will be modifiable via the web interface.~~
+    - ~~admin.nix for an advanced admin to have a file that won't be touched, allowing them to modify with any additional configs they may want.~~
+      - ~~This could be modifiable in an advanced option to enable/disable SSH without overwriting the entire file, just updating the relevant string.~~
+- [x] Convert the .nix file into a template.
+- [x] Build a web page that contains inputs to modify the necessary parts of the server config.
+- [x] Structure the web server to read the existing config corresponding to each webpage on load, save the .tmp file on save, alert when leaving without applying, and copy to .nix and run a rebuild on reload.
+- [ ] Implement auto-rollback if nixos-rebuild fails. Auto-rollback if no web requests are accepted by the server within 60 seconds of new config being applied. Provide an optional rollback to the previously applied config if the admin is unhappy with any resulting changes.
+- [ ] Figure out how to embed templates into the binary.
+- [ ] Parse templates at initialization instead of at runtime after core development of templates (thanks to YouTube comment @iskariotski).
+- [ ] Add HTMX and CSS libraries into the source instead of calling from CDNs (eventually, no rush now).
+- [ ] Test Podman as an alternative to Docker.
