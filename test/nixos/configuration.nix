@@ -46,11 +46,11 @@
   system.stateVersion = "24.11"; # Did you read the comment? TLDR; leave
 
   # ====== SYSTEM ======
-  time.timeZone = "America/Denver";
+  time.timeZone = "America/New_York";
 
   # #Enable Unattended Upgrades
-  system.autoUpgrade.enable = true;
-  system.autoUpgrade.dates = "04:50";
+  system.autoUpgrade.enable = false;
+  system.autoUpgrade.dates = "02:00";
   system.autoUpgrade = {
     # flake = inputs.self.outPath;
     flags = [
@@ -60,9 +60,9 @@
     ];
     randomizedDelaySec = "15min";
   };
-  system.autoUpgrade.allowReboot = true;
-  system.autoUpgrade.rebootWindow.lower = "05:20";
-  system.autoUpgrade.rebootWindow.upper = "05:50";
+  system.autoUpgrade.allowReboot = false;
+  system.autoUpgrade.rebootWindow.lower = "02:30";
+  system.autoUpgrade.rebootWindow.upper = "03:00";
 
   # ====== NETWORKING ======
 
@@ -173,7 +173,7 @@
   };
 
   # ====== REMOTE ACCESS ======
-  services.tailscale.enable = false;
+  services.tailscale.enable = true;
 
   # create a oneshot job to authenticate to Tailscale
   systemd.services.tailscale-autoconnect = {

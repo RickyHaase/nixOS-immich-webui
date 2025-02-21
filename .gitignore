@@ -23,8 +23,10 @@
 !internal/templates/web/index.html
 !internal/templates/web/save.html
 !internal/templates/nixos/configuration.nix
+#!internal/templates/immich/immich-config.json
 
-!test/configuration.nix
+!test/nixos/configuration.nix
+#!test/tank/immich/immich-config.json
 
 # !Makefile
 

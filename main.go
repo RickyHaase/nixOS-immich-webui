@@ -13,7 +13,9 @@ import (
 	"time"
 )
 
-const workingDir string = "test/" //to actually modify the nix config used by the system, this const needs to be set for "/etc/nixos/"
+const nixDir string = "test/nixos/"          //to actually modify the nix config used by the system, this const needs to be set for "/etc/nixos/"
+const immichDir string = "/root/immich-app/" //not certain where this will be in final prod but for now it's /root/immich-app
+// const tankImmich string = "test/tank/immich/" //really only for immich-config.json. Not certain where this will end up in the end
 
 type NixConfig struct { // This struct MUST contain all NixOS config settings that will be modifiable via this interface
 	TimeZone     string
@@ -24,6 +26,54 @@ type NixConfig struct { // This struct MUST contain all NixOS config settings th
 	Tailscale    bool
 	TSAuthkey    string
 }
+
+// type ImmichConfig struct {
+// 	Backup          Backup          `json:"backup"`
+// 	Notifications   Notifications   `json:"notifications"`
+// 	Server          Server          `json:"server"`
+// 	StorageTemplate StorageTemplate `json:"storageTemplate"`
+// }
+
+// type Backup struct {
+// 	Database Database `json:"database"`
+// }
+
+// type Database struct {
+// 	CronExpression string `json:"cronExpression"`
+// 	Enabled        bool   `json:"enabled"`
+// 	KeepLastAmount int    `json:"keepLastAmount"`
+// }
+
+// type Notifications struct {
+// 	SMTP SMTP `json:"smtp"`
+// }
+
+// type SMTP struct {
+// 	Enabled   bool      `json:"enabled"`
+// 	From      string    `json:"from"`
+// 	ReplyTo   string    `json:"replyTo"`
+// 	Transport Transport `json:"transport"`
+// }
+
+// type Transport struct {
+// 	Host       string `json:"host"`
+// 	IgnoreCert bool   `json:"ignoreCert"`
+// 	Password   string `json:"password"`
+// 	Port       int16  `json:"port"`
+// 	Username   string `json:"username"`
+// }
+
+// type Server struct {
+// 	ExternalDomain   string `json:"externalDomain"`
+// 	LoginPageMessage string `json:"loginPageMessage"`
+// 	PublicUsers      bool   `json:"publicUsers"`
+// }
+
+// type StorageTemplate struct {
+// 	Enabled                 bool   `json:"enabled"`
+// 	HashVerificationEnabled bool   `json:"hashVerificationEnabled"`
+// 	Template                string `json:"template"`
+// }
 
 // Need to set defaults and have a way to revert to them (eventually)
 // defaults := &NixConfig{
@@ -79,7 +129,7 @@ func saveTmpFile(config *NixConfig) error {
 		return err
 	}
 
-	outFile, err := os.Create(workingDir + "configuration.tmp")
+	outFile, err := os.Create(nixDir + "configuration.tmp")
 	if err != nil {
 		fmt.Println("Error creating .tmp file:", err)
 		return err
@@ -113,7 +163,7 @@ func getLowerUpper(timeStr string) (string, string, error) { // I like this beca
 
 // return error and handle in page render function... see wiki project. perhaps upon receiving error, it does not render the webpage but instead says "oops, something went wrong :/"
 func loadCurrentConfig() (*NixConfig, error) {
-	file, err := os.ReadFile(workingDir + "configuration.nix")
+	file, err := os.ReadFile(nixDir + "configuration.nix")
 	if err != nil {
 		fmt.Println("Error opening file:", err)
 		return nil, err
@@ -177,9 +227,9 @@ func CopyFile(src, dst string) error {
 }
 
 func switchConfig() error {
-	configPath := workingDir + "configuration.nix"
-	backupPath := workingDir + "configuration.old"
-	tmpPath := workingDir + "configuration.tmp"
+	configPath := nixDir + "configuration.nix"
+	backupPath := nixDir + "configuration.old"
+	tmpPath := nixDir + "configuration.tmp"
 
 	fmt.Println("Backing up configuration.nix to configuration.old...")
 	if err := CopyFile(configPath, backupPath); err != nil { //need to learn/understand this format of error-checking
@@ -209,15 +259,108 @@ func applyChanges() error {
 	return nil
 }
 
+func getStatus() string {
+	cmd := exec.Command("systemctl", "show", "-p", "ActiveState", "--value", "immich-app.service")
+	// cmd.Stdout = os.Stdout
+	// cmd.Stderr = os.Stderr
+	output, err := cmd.Output()
+	if err != nil {
+		fmt.Println("Error getting status:", err)
+		return "Error getting status"
+	}
+
+	status := string(output)
+	switch status {
+	case "active\n":
+		return "Running"
+	case "inactive\n":
+		return "Stopped"
+	default:
+		return "Error getting status"
+	}
+}
+
+func immichService(command string) error {
+	cmd := exec.Command("systemctl", command, "immich-app.service")
+	err := cmd.Run()
+	if err != nil {
+		fmt.Printf("Error running %s against immich-app.service: %v\n", command, err)
+		return err
+	}
+	return nil
+}
+
+func updateImmichContainer() error {
+	path := immichDir + "docker-compose.yml"
+	cmd := exec.Command("docker", "compose", "-f", path, "pull")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	fmt.Println(cmd)
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to pull new containers: %w", err)
+	}
+
+	fmt.Println("compose pull completed successfully!")
+	return nil
+}
+
+// func getImmichConfig() (*ImmichConfig, error) { // Really no idea if this one is right. Seems like a lot happening
+// 	file, err := os.Open(tankImmich + "immich-config.json")
+// 	if err != nil {
+// 		fmt.Println("Error opening file:", err)
+// 		return nil, err
+// 	}
+// 	defer file.Close()
+
+// 	byteValue, _ := io.ReadAll(file)
+
+// 	var immichConfig ImmichConfig
+
+// 	json.Unmarshal(byteValue, &immichConfig)
+
+// 	return &immichConfig, nil
+// }
+
+// // Lots needs to change about this - atleast error reporting
+// func setImmichConfig(email string, password string) {
+// 	immichConfig, err := getImmichConfig()
+// 	if err != nil {
+// 		fmt.Println("Error reading file:", err)
+// 		return
+// 	}
+
+// 	immichConfig.Notifications.SMTP.From = email
+// 	immichConfig.Notifications.SMTP.Transport.Username = email
+// 	immichConfig.Notifications.SMTP.Transport.Password = password
+
+// 	b, err := json.MarshalIndent(immichConfig, "", "  ")
+// 	if err != nil {
+// 		fmt.Println("Error generating JSON:", err)
+// 		return
+// 	}
+
+// 	// fmt.Println(string(b))
+
+// 	fileName := tankImmich + "immich-config.tmp"
+
+// 	if err := os.WriteFile(fileName, b, 0644); err != nil {
+// 		fmt.Println("Error writing to file:", err)
+// 		return
+// 	}
+
+// 	configFile := tankImmich + "immich-config.json"
+
+// 	CopyFile(fileName, configFile)
+// }
+
 // ====== Next Up ======
-// Function to start/stop immich
-// Function to update immich
-//
+// WIP - Gmail notification configuration - Immich JSON & Immich Compose
 // Function to start/stop tailscale
 // Function to sign out of tailscale
 // Function to use tailscale serve for immich
 // Caddy basic Auth
-// Gmail notification configuration - Immich JSON & Immich Compose
 
 func handleRoot(
 	w http.ResponseWriter,
@@ -314,11 +457,98 @@ func handleApply(
 	w.Write([]byte("Rebuild Completed Successfully"))
 }
 
+func handleStatus(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	fmt.Println("Recieved Status Request")
+	w.Write([]byte(getStatus()))
+}
+
+func handleStop(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	fmt.Println("Recieved Stop Request")
+
+	err := immichService("stop")
+	if err != nil {
+		http.Error(w, "Issue stopping Immich"+err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Write([]byte(getStatus()))
+}
+
+func handleStart(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	fmt.Println("Recieved Start Request")
+
+	err := immichService("start")
+	if err != nil {
+		http.Error(w, "Issue starting Immich"+err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Write([]byte(getStatus()))
+}
+
+func handleUpdate(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	fmt.Println("Recieved Update Request")
+
+	if err := immichService("stop"); err != nil {
+		http.Error(w, "Issue stopping Immich"+err.Error(), http.StatusInternalServerError)
+	}
+
+	if err := updateImmichContainer(); err != nil {
+		fmt.Println("Error updating Immich:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := immichService("start"); err != nil {
+		http.Error(w, "Issue starting Immich"+err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Write([]byte("Pulled new containers successfully"))
+
+}
+
+// func handleEmailGet(
+// 	w http.ResponseWriter,
+// 	r *http.Request,
+// ) {
+// 	// getImmichConfig()
+
+// 	// email := "bob@gmail.com"
+
+// 	// htmlStr := `<input type="email" id="gmail-address" name="gmail-address" placeholder="example@gmail.com" value="{{.email}}">`
+// 	// // need to store and parse return before writing it
+// 	// tmpl, _ := htmltemplate.New("t").Parse(htmlStr)
+// 	// tmpl.Execute(w, email)
+// }
+
+// func handleEmailPost(
+// 	w http.ResponseWriter,
+// 	r *http.Request,
+// ) {
+// 	setImmichConfig("test@gmail.org", "tempPass")
+// }
+
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", handleRoot)
 	mux.HandleFunc("POST /save", handleSave)
 	mux.HandleFunc("POST /apply", handleApply)
+	mux.HandleFunc("GET /status", handleStatus)
+	mux.HandleFunc("POST /stop", handleStop)
+	mux.HandleFunc("POST /start", handleStart)
+	mux.HandleFunc("POST /update", handleUpdate)
+	// mux.HandleFunc("GET /email", handleEmailGet)
+	// mux.HandleFunc("POST /email", handleEmailPost)
 
 	fmt.Println("Server started at http://localhost:8000")
 	http.ListenAndServe("localhost:8000", mux)
