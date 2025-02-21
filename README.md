@@ -1,5 +1,5 @@
 # Easy Immich Server
-A server management tool with a web UI designed to manage a NixOS system with the sole purpose of running and maintaining Immich on the host.
+A fully deterministic system with a web UI for managing a NixOS system, designed specifically to run and maintain Immich on a host.
 
 Currently under development. Building out templates, pages, docs, routes, and learning Go. Some resources will not be committed even if they're marked as "done" in the To-Do because while they've been created, they haven't been sanitized which will happen in an upcoming to-do.
 
