@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
 	htmltemplate "html/template"
@@ -17,6 +18,9 @@ import (
 const nixDir string = "test/nixos/"           //to actually modify the nix config used by the system, this const needs to be set for "/etc/nixos/"
 const immichDir string = "/root/immich-app/"  //not certain where this will be in final prod but for now it's /root/immich-app
 const tankImmich string = "test/tank/immich/" //really only for immich-config.json. Not certain where this will end up in the end
+
+//go:embed internal/templates
+var templates embed.FS
 
 type NixConfig struct { // This struct MUST contain all NixOS config settings that will be modifiable via this interface
 	TimeZone     string
@@ -126,7 +130,7 @@ func parseBool(value string) bool {
 }
 
 func saveTmpFile(config *NixConfig) error {
-	tmpl, err := texttemplate.ParseFiles("internal/templates/nixos/configuration.nix")
+	tmpl, err := texttemplate.ParseFS(templates, "internal/templates/nixos/configuration.nix")
 	if err != nil {
 		fmt.Println("Error rendering template:", err)
 		return err
@@ -401,7 +405,7 @@ func handleRoot(
 		return
 	}
 
-	tmpl, err := htmltemplate.ParseFiles("internal/templates/web/index.html")
+	tmpl, err := htmltemplate.ParseFS(templates, "internal/templates/web/index.html")
 	if err != nil {
 		fmt.Println("Error rendering template:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -453,7 +457,7 @@ func handleSave(
 		return
 	}
 
-	tmpl, err := htmltemplate.ParseFiles("internal/templates/web/save.html")
+	tmpl, err := htmltemplate.ParseFS(templates, "internal/templates/web/save.html")
 	if err != nil {
 		fmt.Println("Error rendering template:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

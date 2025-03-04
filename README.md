@@ -18,7 +18,7 @@ Have a "functional" web UI that can display the currently applied NixOS config (
   - [x] Minimal Immich container controls - start/stop, update
 - [ ] v0.1.0-alpha.2
   - [x] Add functionality to update Immich Email config from web UI
-  - [ ] Embed template files in the binary
+  - [x] Embed template files in the binary
   - [ ] Add GUI interfaces to power off and restart the server
   - [ ] Make sure Immich is installed in the expected location before allowing a configuration update to be applied
   - [ ] Make sure that error handling is actually working as expected
