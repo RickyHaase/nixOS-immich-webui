@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	htmltemplate "html/template"
 	"io"
@@ -13,9 +14,9 @@ import (
 	"time"
 )
 
-const nixDir string = "test/nixos/"          //to actually modify the nix config used by the system, this const needs to be set for "/etc/nixos/"
-const immichDir string = "/root/immich-app/" //not certain where this will be in final prod but for now it's /root/immich-app
-// const tankImmich string = "test/tank/immich/" //really only for immich-config.json. Not certain where this will end up in the end
+const nixDir string = "test/nixos/"           //to actually modify the nix config used by the system, this const needs to be set for "/etc/nixos/"
+const immichDir string = "/root/immich-app/"  //not certain where this will be in final prod but for now it's /root/immich-app
+const tankImmich string = "test/tank/immich/" //really only for immich-config.json. Not certain where this will end up in the end
 
 type NixConfig struct { // This struct MUST contain all NixOS config settings that will be modifiable via this interface
 	TimeZone     string
@@ -25,57 +26,59 @@ type NixConfig struct { // This struct MUST contain all NixOS config settings th
 	UpgradeUpper string //value derived from UpgradeTime+60min
 	Tailscale    bool
 	TSAuthkey    string
+	Email        string
+	EmailPass    bool
 }
 
-// type ImmichConfig struct {
-// 	Backup          Backup          `json:"backup"`
-// 	Notifications   Notifications   `json:"notifications"`
-// 	Server          Server          `json:"server"`
-// 	StorageTemplate StorageTemplate `json:"storageTemplate"`
-// }
+type ImmichConfig struct {
+	Backup          Backup          `json:"backup"`
+	Notifications   Notifications   `json:"notifications"`
+	Server          Server          `json:"server"`
+	StorageTemplate StorageTemplate `json:"storageTemplate"`
+}
 
-// type Backup struct {
-// 	Database Database `json:"database"`
-// }
+type Backup struct {
+	Database Database `json:"database"`
+}
 
-// type Database struct {
-// 	CronExpression string `json:"cronExpression"`
-// 	Enabled        bool   `json:"enabled"`
-// 	KeepLastAmount int    `json:"keepLastAmount"`
-// }
+type Database struct {
+	CronExpression string `json:"cronExpression"`
+	Enabled        bool   `json:"enabled"`
+	KeepLastAmount int    `json:"keepLastAmount"`
+}
 
-// type Notifications struct {
-// 	SMTP SMTP `json:"smtp"`
-// }
+type Notifications struct {
+	SMTP SMTP `json:"smtp"`
+}
 
-// type SMTP struct {
-// 	Enabled   bool      `json:"enabled"`
-// 	From      string    `json:"from"`
-// 	ReplyTo   string    `json:"replyTo"`
-// 	Transport Transport `json:"transport"`
-// }
+type SMTP struct {
+	Enabled   bool      `json:"enabled"`
+	From      string    `json:"from"`
+	ReplyTo   string    `json:"replyTo"`
+	Transport Transport `json:"transport"`
+}
 
-// type Transport struct {
-// 	Host       string `json:"host"`
-// 	IgnoreCert bool   `json:"ignoreCert"`
-// 	Password   string `json:"password"`
-// 	Port       int16  `json:"port"`
-// 	Username   string `json:"username"`
-// }
+type Transport struct {
+	Host       string `json:"host"`
+	IgnoreCert bool   `json:"ignoreCert"`
+	Password   string `json:"password"`
+	Port       int16  `json:"port"`
+	Username   string `json:"username"`
+}
 
-// type Server struct {
-// 	ExternalDomain   string `json:"externalDomain"`
-// 	LoginPageMessage string `json:"loginPageMessage"`
-// 	PublicUsers      bool   `json:"publicUsers"`
-// }
+type Server struct {
+	ExternalDomain   string `json:"externalDomain"`
+	LoginPageMessage string `json:"loginPageMessage"`
+	PublicUsers      bool   `json:"publicUsers"`
+}
 
-// type StorageTemplate struct {
-// 	Enabled                 bool   `json:"enabled"`
-// 	HashVerificationEnabled bool   `json:"hashVerificationEnabled"`
-// 	Template                string `json:"template"`
-// }
+type StorageTemplate struct {
+	Enabled                 bool   `json:"enabled"`
+	HashVerificationEnabled bool   `json:"hashVerificationEnabled"`
+	Template                string `json:"template"`
+}
 
-// Need to set defaults and have a way to revert to them (eventually)
+// // Need to set defaults and have a way to revert to them (eventually)
 // defaults := &NixConfig{
 // 	TimeZone: "America/New_York",
 // 	AutoUpgrade: true,
@@ -202,6 +205,24 @@ func loadCurrentConfig() (*NixConfig, error) {
 		return nil, err
 	}
 
+	// Parse settings out of immich-config.json
+	immich, err := getImmichConfig()
+	if err != nil {
+		fmt.Println("Error parsing Immich Config", err)
+		return nil, err
+	}
+
+	config.Email = immich.Notifications.SMTP.Transport.Username
+
+	if immich.Notifications.SMTP.Transport.Password != "" {
+		// fmt.Println("IF was met")
+		config.EmailPass = true
+	} else {
+		// fmt.Println("ELSE was met")
+		config.EmailPass = false
+	}
+
+	// fmt.Print(config.EmailPass)
 	return &config, nil
 }
 
@@ -306,54 +327,61 @@ func updateImmichContainer() error {
 	return nil
 }
 
-// func getImmichConfig() (*ImmichConfig, error) { // Really no idea if this one is right. Seems like a lot happening
-// 	file, err := os.Open(tankImmich + "immich-config.json")
-// 	if err != nil {
-// 		fmt.Println("Error opening file:", err)
-// 		return nil, err
-// 	}
-// 	defer file.Close()
+func getImmichConfig() (*ImmichConfig, error) { // Really no idea if this one is right. Seems like a lot happening
+	file, err := os.Open(tankImmich + "immich-config.json")
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return nil, err
+	}
+	defer file.Close()
 
-// 	byteValue, _ := io.ReadAll(file)
+	byteValue, _ := io.ReadAll(file)
 
-// 	var immichConfig ImmichConfig
+	var immichConfig ImmichConfig
 
-// 	json.Unmarshal(byteValue, &immichConfig)
+	json.Unmarshal(byteValue, &immichConfig)
 
-// 	return &immichConfig, nil
-// }
+	return &immichConfig, nil
+}
 
-// // Lots needs to change about this - atleast error reporting
-// func setImmichConfig(email string, password string) {
-// 	immichConfig, err := getImmichConfig()
-// 	if err != nil {
-// 		fmt.Println("Error reading file:", err)
-// 		return
-// 	}
+// Lots needs to change about this - atleast error reporting
+func setImmichConfig(email string, password string) {
+	// NOT using templating becuase we've got all the JSON we need... should cut down on errors but we need a "default" value somewhere
+	immichConfig, err := getImmichConfig()
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return
+	}
 
-// 	immichConfig.Notifications.SMTP.From = email
-// 	immichConfig.Notifications.SMTP.Transport.Username = email
-// 	immichConfig.Notifications.SMTP.Transport.Password = password
+	immichConfig.Notifications.SMTP.From = "Immich Server <" + email + ">"
+	immichConfig.Notifications.SMTP.Transport.Username = email
+	immichConfig.Notifications.SMTP.Transport.Password = password
 
-// 	b, err := json.MarshalIndent(immichConfig, "", "  ")
-// 	if err != nil {
-// 		fmt.Println("Error generating JSON:", err)
-// 		return
-// 	}
+	if email == "" || password == "" {
+		immichConfig.Notifications.SMTP.Enabled = false
+	} else {
+		immichConfig.Notifications.SMTP.Enabled = true
+	}
 
-// 	// fmt.Println(string(b))
+	b, err := json.MarshalIndent(immichConfig, "", "  ")
+	if err != nil {
+		fmt.Println("Error generating JSON:", err)
+		return
+	}
 
-// 	fileName := tankImmich + "immich-config.tmp"
+	// fmt.Println(string(b))
 
-// 	if err := os.WriteFile(fileName, b, 0644); err != nil {
-// 		fmt.Println("Error writing to file:", err)
-// 		return
-// 	}
+	fileName := tankImmich + "immich-config.tmp"
 
-// 	configFile := tankImmich + "immich-config.json"
+	if err := os.WriteFile(fileName, b, 0644); err != nil {
+		fmt.Println("Error writing to file:", err)
+		return
+	}
 
-// 	CopyFile(fileName, configFile)
-// }
+	configFile := tankImmich + "immich-config.json"
+
+	CopyFile(fileName, configFile)
+}
 
 // ====== Next Up ======
 // WIP - Gmail notification configuration - Immich JSON & Immich Compose
@@ -521,22 +549,57 @@ func handleUpdate(
 // 	w http.ResponseWriter,
 // 	r *http.Request,
 // ) {
-// 	// getImmichConfig()
+// 	fmt.Println("Email Get")
 
-// 	// email := "bob@gmail.com"
-
-// 	// htmlStr := `<input type="email" id="gmail-address" name="gmail-address" placeholder="example@gmail.com" value="{{.email}}">`
-// 	// // need to store and parse return before writing it
-// 	// tmpl, _ := htmltemplate.New("t").Parse(htmlStr)
-// 	// tmpl.Execute(w, email)
 // }
 
-// func handleEmailPost(
-// 	w http.ResponseWriter,
-// 	r *http.Request,
-// ) {
-// 	setImmichConfig("test@gmail.org", "tempPass")
-// }
+func handleEmailPost(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	fmt.Println("Email Post")
+
+	// Do I need to validate submitted values in some way?
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "Failed to parse form data", http.StatusBadRequest)
+		return
+	}
+	setImmichConfig(r.FormValue("gmail-address"), r.FormValue("gmail-password"))
+
+	// Read new config and return HTML with new config injected
+	//
+	config := NixConfig{}
+
+	// Parse settings out of immich-config.json - might need to refactor these 15 lines out into a function to maintan DRY best practice
+	// (Also see repeated code in the "loadCurrentConfig()" function)
+	immich, err := getImmichConfig()
+	if err != nil {
+		fmt.Println("Error parsing Immich Config", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	config.Email = immich.Notifications.SMTP.Transport.Username
+	if immich.Notifications.SMTP.Transport.Password != "" {
+		// fmt.Println("IF was met")
+		config.EmailPass = true
+	} else {
+		// fmt.Println("ELSE was met")
+		config.EmailPass = false
+	}
+
+	htmlStr := `    <form id="email-form" action="/email" method="post">
+        <label for="gmail-address">Gmail Address:</label>
+        <input type="email" id="gmail-address" name="gmail-address" placeholder="example@gmail.com" value="{{if .Email}}{{.Email}}{{else}}{{end}}">        <label for="gmail-password">Gmail App Password:</label>
+        <input type="password" id="gmail-password" name="gmail-password" placeholder="{{if .EmailPass}}password is set{{else}}fded beid aibr kxps{{end}}">
+        <button type="submit" hx-post="/email" hx-target="#email-form">Submit</button>
+        <br><small>Use your gmail account with an <a href="https://support.google.com/mail/answer/185833">app password</a> to allow for immich to send emails</small>
+    </form>`
+	// // need to store and parse return before writing it
+	tmpl, _ := htmltemplate.New("t").Parse(htmlStr)
+	tmpl.Execute(w, config)
+}
 
 func main() {
 	mux := http.NewServeMux()
@@ -548,7 +611,7 @@ func main() {
 	mux.HandleFunc("POST /start", handleStart)
 	mux.HandleFunc("POST /update", handleUpdate)
 	// mux.HandleFunc("GET /email", handleEmailGet)
-	// mux.HandleFunc("POST /email", handleEmailPost)
+	mux.HandleFunc("POST /email", handleEmailPost)
 
 	fmt.Println("Server started at http://localhost:8000")
 	http.ListenAndServe("localhost:8000", mux)

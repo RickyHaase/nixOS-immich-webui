@@ -97,7 +97,7 @@
         <label for="admin-password">Admin Password:</label>
         <input type="password" id="admin-password" name="admin-password"> -->
 
-        <br><br><button type="submit" id="save">Save</button>
+        <br><br><button id="save">Save</button>
     </form>
 
     <hr>
@@ -106,14 +106,21 @@
     <!-- This will certainly be moved back over to the nixos admin panel once I get email notifications configured in some capacity over there... for now tho, with no auto-backups or alerting to be done, I don't need it for the nixos side of things so I'm not going to complicate things -->
     <!-- Will need to get template engine to parse and pre-fill these values... should be easier since file stores in .json -->
     <!-- ***Was in the middle of building out this functionality when time to release came. Server-side code is commented out.*** -->
-    <!-- <form action="/email" method="post"> -->
+    <form id="email-form" action="/email" method="post">
         <label for="gmail-address">Gmail Address:</label>
-        <input type="email" id="gmail-address" name="gmail-address" placeholder="example@gmail.com" hx-get="/email" hx-trigger="load" hx-swap="outerHTML">
+        <input type="email" id="gmail-address" name="gmail-address" placeholder="example@gmail.com" value="{{if .Email}}{{.Email}}{{else}}{{end}}">
         <label for="gmail-password">Gmail App Password:</label>
-        <input type="password" id="gmail-password" name="gmail-password" placeholder="fded beid aibr kxps">
-        <button hx-post="/email">Submit</button>
-        <br><small>Use your gmail account with an <a href="https://support.google.com/mail/answer/185833">app password</a> to allow for immich to send emails</small>
-    <!-- </form><br> -->
+        <input type="password" id="gmail-password" name="gmail-password" placeholder="{{if .EmailPass}}password is set{{else}}fded beid aibr kxps{{end}}">
+        <button type="submit" hx-post="/email" hx-target="#email-form">Submit</button>
+        <br><small>Use your gmail account with an <a href="https://support.google.com/mail/answer/185833">app password</a> to allow for immich to send emails.</small>
+    </form>
+
+    <!-- <label for="immich-config">Immich Configuration:</label>
+    <br><select name="immich-config" id="immich-config">
+        <option value="manage">Manage Immich settings here, relying mainly on defaults</option>
+        <option value="defer">Defer Immich configuration to the admin interface for the first user created</option>
+    </select>
+    <br><small>Currently just a placeholder - thinking about this option but not set on it</small> -->
 
     <!-- Start/Stop -->
     <!-- Need to change status update on page load to be rendered server-side to provide atleat minimal functionality to non-JS clients -->
