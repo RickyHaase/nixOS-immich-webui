@@ -6,6 +6,7 @@ import (
 	"fmt"
 	htmltemplate "html/template"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/exec"
@@ -15,6 +16,7 @@ import (
 	"time"
 )
 
+// Perhaps setup an init function that checks if binary is running in dev or prod to set these paths
 const nixDir string = "test/nixos/"           //to actually modify the nix config used by the system, this const needs to be set for "/etc/nixos/"
 const immichDir string = "/root/immich-app/"  //not certain where this will be in final prod but for now it's /root/immich-app
 const tankImmich string = "test/tank/immich/" //really only for immich-config.json. Not certain where this will end up in the end
@@ -82,70 +84,74 @@ type StorageTemplate struct {
 	Template                string `json:"template"`
 }
 
-// // Need to set defaults and have a way to revert to them (eventually)
-// defaults := &NixConfig{
-// 	TimeZone: "America/New_York",
-// 	AutoUpgrade: true,
-// 	UpgradeTime: "2:00",
-// 	Tailscale: false,
-// 	TSAuthkey: "",
-// }
+// Need Default NixOS Config
+// Need Default Immich Config
+// Will need way to apply default configs. Will create default configs and use them when creating the "intial setup" flow
+// Will change template parsing to happen at program intiialization rather than at runtime
 
 // Helper function to parse boolean values from the configuration file - thanks ChatGPT :)
 // Might revise the structure and error handling on these now that I've got a better understanding of how they work
 func parseBooleanSetting(fileContent []byte, setting string) (bool, error) {
+	slog.Debug("parseBooleanSetting", "setting", setting)
 	re := regexp.MustCompile(fmt.Sprintf(`(?m)^\s*%s\s*=\s*(true|false)\s*;`, setting))
 	match := re.FindSubmatch(fileContent)
 	if match == nil {
+		slog.Debug("No Match Found", "setting", setting)
 		return false, fmt.Errorf("%s not found", setting)
 	}
 	return string(match[1]) == "true", nil
 }
 
 func parseStringSetting(fileContent []byte, setting string) (string, error) {
+	slog.Debug("parseStringSetting", "setting", setting)
 	re := regexp.MustCompile(fmt.Sprintf(`(?m)^\s*%s\s*=\s*"(.*?)"\s*;`, setting))
 	match := re.FindSubmatch(fileContent)
 	if match == nil {
+		slog.Debug("No Match Found", "setting", setting)
 		return "", fmt.Errorf("%s not found", setting)
 	}
 	return string(match[1]), nil
 }
 
 func parseAuthKeySetting(fileContent []byte) (string, error) {
+	slog.Debug("parseAuthKeySetting()")
 	re := regexp.MustCompile(`\btskey-auth-[a-zA-Z0-9]+-[a-zA-Z0-9]+\b`)
 	match := re.Find(fileContent)
 	if match == nil {
+		slog.Debug("No Match Found for authkey")
 		return "", fmt.Errorf("tskey-auth not found")
 	}
 	return string(match), nil
 }
 
 func parseBool(value string) bool {
+	slog.Debug("parseBool(string)", "string", value)
 	boolValue, err := strconv.ParseBool(value)
 	if err != nil {
-		// Should probably actually do something with the error rather than just default to false
+		slog.Error("| Error parsing boolean value - defaulting to False |", "err", err)
 		return false
 	}
 	return boolValue
 }
 
 func saveTmpFile(config *NixConfig) error {
+	slog.Debug("saveTmpFile()")
 	tmpl, err := texttemplate.ParseFS(templates, "internal/templates/nixos/configuration.nix")
 	if err != nil {
-		fmt.Println("Error rendering template:", err)
+		slog.Debug("| Error rendering template |", "err", err)
 		return err
 	}
 
 	outFile, err := os.Create(nixDir + "configuration.tmp")
 	if err != nil {
-		fmt.Println("Error creating .tmp file:", err)
+		slog.Debug("| Error creating .tmp file |", "err", err)
 		return err
 	}
 	defer outFile.Close()
 
 	err = tmpl.Execute(outFile, config)
 	if err != nil {
-		fmt.Println("Error writing .tmp file:", err)
+		slog.Debug("| Error writing .tmp file |", "err", err)
 		return err
 	}
 
@@ -153,9 +159,10 @@ func saveTmpFile(config *NixConfig) error {
 }
 
 func getLowerUpper(timeStr string) (string, string, error) { // I like this because it inadvertently performs server-side validation of the time sent to the server
+	slog.Debug("getLowerUpper()")
 	t, err := time.Parse("15:04", timeStr)
 	if err != nil {
-		fmt.Println("Error parsing time:", err)
+		slog.Debug("Error parsing time:", "err", err)
 		return "", "", err
 	}
 
@@ -170,9 +177,10 @@ func getLowerUpper(timeStr string) (string, string, error) { // I like this beca
 
 // return error and handle in page render function... see wiki project. perhaps upon receiving error, it does not render the webpage but instead says "oops, something went wrong :/"
 func loadCurrentConfig() (*NixConfig, error) {
+	slog.Debug("loadCurrentConfig()")
 	file, err := os.ReadFile(nixDir + "configuration.nix")
 	if err != nil {
-		fmt.Println("Error opening file:", err)
+		slog.Debug("Error opening file:", "err", err)
 		return nil, err
 	}
 
@@ -181,56 +189,57 @@ func loadCurrentConfig() (*NixConfig, error) {
 	// Parse the relevant values out of the settings in the config file
 	config.TimeZone, err = parseStringSetting(file, "time.timeZone")
 	if err != nil {
-		fmt.Println("Error parsing TimeZone:", err)
+		slog.Debug("Error parsing TimeZone:", "err", err)
 		return nil, err
 	}
 
 	config.AutoUpgrade, err = parseBooleanSetting(file, "system.autoUpgrade.enable")
 	if err != nil {
-		fmt.Println("Error parsing AutoUpgrade Enable:", err)
+		slog.Debug("Error parsing AutoUpgrade Enable:", "err", err)
 		return nil, err
 	}
 
 	config.UpgradeTime, err = parseStringSetting(file, "system.autoUpgrade.dates")
 	if err != nil {
-		fmt.Println("Error parsing UpdgradeTime:", err)
+		slog.Debug("Error parsing UpdgradeTime:", "err", err)
 		return nil, err
 	}
 
 	config.Tailscale, err = parseBooleanSetting(file, "services.tailscale.enable")
 	if err != nil {
-		fmt.Println("Error parsing Tailscale Enable", err)
+		slog.Debug("Error parsing Tailscale Enable", "err", err)
 		return nil, err
 	}
 
 	config.TSAuthkey, err = parseAuthKeySetting(file)
 	if err != nil {
-		fmt.Println("Error parsing Tailscale AuthKey", err)
+		slog.Debug("Error parsing Tailscale AuthKey", "err", err)
 		return nil, err
 	}
 
 	// Parse settings out of immich-config.json
 	immich, err := getImmichConfig()
 	if err != nil {
-		fmt.Println("Error parsing Immich Config", err)
+		slog.Debug("Error parsing Immich Config", "err", err)
 		return nil, err
 	}
 
 	config.Email = immich.Notifications.SMTP.Transport.Username
 
 	if immich.Notifications.SMTP.Transport.Password != "" {
-		// fmt.Println("IF was met")
+		slog.Debug("IF was met")
 		config.EmailPass = true
 	} else {
-		// fmt.Println("ELSE was met")
+		slog.Debug("ELSE was met")
 		config.EmailPass = false
 	}
+	slog.Debug("Password Boolean", "EmailPass", config.EmailPass)
 
-	// fmt.Print(config.EmailPass)
 	return &config, nil
 }
 
 func CopyFile(src, dst string) error {
+	slog.Debug("CopyFile()")
 	sourceFile, err := os.Open(src)
 	if err != nil {
 		return fmt.Errorf("failed to open source file %s: %w", src, err)
@@ -252,45 +261,51 @@ func CopyFile(src, dst string) error {
 }
 
 func switchConfig() error {
+	slog.Debug("switchConfig()")
 	configPath := nixDir + "configuration.nix"
 	backupPath := nixDir + "configuration.old"
 	tmpPath := nixDir + "configuration.tmp"
 
-	fmt.Println("Backing up configuration.nix to configuration.old...")
-	if err := CopyFile(configPath, backupPath); err != nil { //need to learn/understand this format of error-checking
+	slog.Info("Backing up configuration.nix to configuration.old...")
+	if err := CopyFile(configPath, backupPath); err != nil {
+		slog.Debug("Error backing up config file", "err", err)
 		return err
 	}
 
-	fmt.Println("Replacing configuration.nix with configuration.tmp...")
-	if err := CopyFile(tmpPath, configPath); err != nil { //need to learn/understand this format of error-checking
+	slog.Info("Replacing configuration.nix with configuration.tmp...")
+	if err := CopyFile(tmpPath, configPath); err != nil {
+		slog.Debug("Error replacing config file", "err", err)
 		return err
 	}
 
-	fmt.Println("Configuration update complete.")
+	slog.Info("Configuration file swtich complete.")
 	return nil
 }
 
 func applyChanges() error {
+	slog.Debug("applyChanges()")
 	cmd := exec.Command("nixos-rebuild", "switch")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
 	err := cmd.Run()
 	if err != nil {
+		slog.Debug("| error running 'nixos-rebuild switch' |", "err", err)
 		return fmt.Errorf("failed to execute nixos-rebuild: %w", err)
 	}
 
-	fmt.Println("NixOS rebuild completed successfully.")
+	slog.Info("NixOS rebuild completed successfully.")
 	return nil
 }
 
 func getStatus() string {
+	slog.Debug("getStatus()")
 	cmd := exec.Command("systemctl", "show", "-p", "ActiveState", "--value", "immich-app.service")
 	// cmd.Stdout = os.Stdout
 	// cmd.Stderr = os.Stderr
 	output, err := cmd.Output()
 	if err != nil {
-		fmt.Println("Error getting status:", err)
+		slog.Error("| Error getting status of immich-app.service |", "err", err)
 		return "Error getting status"
 	}
 
@@ -301,21 +316,24 @@ func getStatus() string {
 	case "inactive\n":
 		return "Stopped"
 	default:
+		slog.Error("| Unexpected status of immich-app.service |", "err", err)
 		return "Error getting status"
 	}
 }
 
 func immichService(command string) error {
+	slog.Debug("immichService(string)", "string", command)
 	cmd := exec.Command("systemctl", command, "immich-app.service")
 	err := cmd.Run()
 	if err != nil {
-		fmt.Printf("Error running %s against immich-app.service: %v\n", command, err)
+		slog.Error("Error running %s against immich-app.service: %v", command, err)
 		return err
 	}
 	return nil
 }
 
 func updateImmichContainer() error {
+	slog.Debug("updateImmichContainer()")
 	path := immichDir + "docker-compose.yml"
 	cmd := exec.Command("docker", "compose", "-f", path, "pull")
 	cmd.Stdout = os.Stdout
@@ -324,17 +342,19 @@ func updateImmichContainer() error {
 	fmt.Println(cmd)
 	err := cmd.Run()
 	if err != nil {
+		slog.Debug("| Error executing 'docker compose pull' |", "cmd", cmd, "err", err)
 		return fmt.Errorf("failed to pull new containers: %w", err)
 	}
 
-	fmt.Println("compose pull completed successfully!")
+	slog.Info("compose pull completed successfully")
 	return nil
 }
 
 func getImmichConfig() (*ImmichConfig, error) { // Really no idea if this one is right. Seems like a lot happening
+	slog.Debug("getImmichConfig()")
 	file, err := os.Open(tankImmich + "immich-config.json")
 	if err != nil {
-		fmt.Println("Error opening file:", err)
+		slog.Debug("| Error opening immich config file |", "err", err)
 		return nil, err
 	}
 	defer file.Close()
@@ -348,13 +368,13 @@ func getImmichConfig() (*ImmichConfig, error) { // Really no idea if this one is
 	return &immichConfig, nil
 }
 
-// Lots needs to change about this - atleast error reporting
-func setImmichConfig(email string, password string) {
+func setImmichConfig(email string, password string) error {
+	slog.Debug("setImmichConfig()")
 	// NOT using templating becuase we've got all the JSON we need... should cut down on errors but we need a "default" value somewhere
 	immichConfig, err := getImmichConfig()
 	if err != nil {
-		fmt.Println("Error reading file:", err)
-		return
+		slog.Debug("Error reading immich config file", "err", err)
+		return err
 	}
 
 	immichConfig.Notifications.SMTP.From = "Immich Server <" + email + ">"
@@ -369,67 +389,66 @@ func setImmichConfig(email string, password string) {
 
 	b, err := json.MarshalIndent(immichConfig, "", "  ")
 	if err != nil {
-		fmt.Println("Error generating JSON:", err)
-		return
+		slog.Debug("Error generating JSON", "err", err)
+		return err
 	}
 
-	// fmt.Println(string(b))
+	slog.Debug(string(b))
 
 	fileName := tankImmich + "immich-config.tmp"
 
 	if err := os.WriteFile(fileName, b, 0644); err != nil {
-		fmt.Println("Error writing to file:", err)
-		return
+		slog.Debug("Error writing to file:", "err", err)
+		return err
 	}
 
 	configFile := tankImmich + "immich-config.json"
 
 	CopyFile(fileName, configFile)
-}
 
-// ====== Next Up ======
-// WIP - Gmail notification configuration - Immich JSON & Immich Compose
-// Function to start/stop tailscale
-// Function to sign out of tailscale
-// Function to use tailscale serve for immich
-// Caddy basic Auth
+	slog.Info("Immich config Set")
+
+	return nil
+}
 
 func handleRoot(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	slog.Info("| Received Request at root |", "IP", r.Header.Get("X-Forwarded-For"))
+
 	config, err := loadCurrentConfig()
 	if err != nil {
-		fmt.Println("Error loading config:", err)
+		slog.Error("| Error loading config |", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	tmpl, err := htmltemplate.ParseFS(templates, "internal/templates/web/index.html")
 	if err != nil {
-		fmt.Println("Error rendering template:", err)
+		slog.Error("| Error rendering template |", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// I should probably add a check for error on execute to catch incase there are values the template requires that are missing
 	tmpl.Execute(w, config)
-	// renderTemplate(w, "view", config)
-
-	// loadCurrentConfig()
-	// http.ServeFile(w, r, "internal/templates/web/index.html")
 }
 
 func handleSave(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	fmt.Println("Recieved Save")
+	slog.Info("Received Save Request")
 
 	err := r.ParseForm()
 	if err != nil {
+		slog.Error("| Error parsing form |", "err", err)
 		http.Error(w, "Failed to parse form data", http.StatusBadRequest)
 		return
 	}
+
+	slog.Debug("Received Form", "body", r.Form)
 
 	config := &NixConfig{
 		TimeZone:    r.FormValue("timezone"),
@@ -439,27 +458,27 @@ func handleSave(
 		TSAuthkey:   r.FormValue("tailscale-authkey"),
 	}
 
-	// fmt.Printf("Received Body: %+v \n", config)
-
 	t1, t2, err := getLowerUpper(config.UpgradeTime)
 	if err != nil {
+		slog.Error("| Error calculating time setting |", "err", err)
 		http.Error(w, "Issue with time setting"+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	config.UpgradeLower = t1
 	config.UpgradeUpper = t2
 
-	// fmt.Printf("Updated config: %+v \n", config)
+	slog.Debug("Updated config", "config", config)
 
 	err = saveTmpFile(config)
 	if err != nil {
+		slog.Error("| Error saving tmp file |", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	tmpl, err := htmltemplate.ParseFS(templates, "internal/templates/web/save.html")
 	if err != nil {
-		fmt.Println("Error rendering template:", err)
+		slog.Error("| Error rendering save template |", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -472,20 +491,21 @@ func handleApply(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	fmt.Println("Recieved Apply")
+	slog.Info("Received Apply Request")
 
 	if err := switchConfig(); err != nil {
-		fmt.Println("Error when switching config:", err)
+		slog.Error("| Error when switching config files |", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if err := applyChanges(); err != nil {
-		fmt.Println("Error when rebuilding NixOS:", err)
+		slog.Error("| Error Applying Changes |", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// To-Do make a better confirmation page
 	w.Write([]byte("Rebuild Completed Successfully"))
 }
 
@@ -493,7 +513,8 @@ func handleStatus(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	fmt.Println("Recieved Status Request")
+	// fmt.Println("Received Status Request")
+	slog.Debug("Received Status Request")
 	w.Write([]byte(getStatus()))
 }
 
@@ -501,47 +522,51 @@ func handleStop(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	fmt.Println("Recieved Stop Request")
+	slog.Info("Received Stop Request")
 
 	err := immichService("stop")
 	if err != nil {
+		slog.Error("| Error stopping immich-app.service |", "err", err)
 		http.Error(w, "Issue stopping Immich"+err.Error(), http.StatusInternalServerError)
 	}
 
-	w.Write([]byte(getStatus()))
+	// w.Write([]byte(getStatus()))
 }
 
 func handleStart(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	fmt.Println("Recieved Start Request")
+	slog.Info("Received Start Request")
 
 	err := immichService("start")
 	if err != nil {
+		slog.Error("| Error starting immich-app.service |", "err", err)
 		http.Error(w, "Issue starting Immich"+err.Error(), http.StatusInternalServerError)
 	}
 
-	w.Write([]byte(getStatus()))
+	// w.Write([]byte(getStatus()))
 }
 
 func handleUpdate(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	fmt.Println("Recieved Update Request")
+	slog.Info("Received Update Request")
 
 	if err := immichService("stop"); err != nil {
+		slog.Error("| Error stopping immich-app.service |", "err", err)
 		http.Error(w, "Issue stopping Immich"+err.Error(), http.StatusInternalServerError)
 	}
 
 	if err := updateImmichContainer(); err != nil {
-		fmt.Println("Error updating Immich:", err)
+		slog.Error("| Error updating Immich |", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if err := immichService("start"); err != nil {
+		slog.Error("| Error starting immich-app.service |", "err", err)
 		http.Error(w, "Issue starting Immich"+err.Error(), http.StatusInternalServerError)
 	}
 
@@ -549,47 +574,45 @@ func handleUpdate(
 
 }
 
-// func handleEmailGet(
-// 	w http.ResponseWriter,
-// 	r *http.Request,
-// ) {
-// 	fmt.Println("Email Get")
-
-// }
-
+// This function is a tad messy and ought to be cleaned up
 func handleEmailPost(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	fmt.Println("Email Post")
+	slog.Info("Received Email Post")
 
-	// Do I need to validate submitted values in some way?
 	err := r.ParseForm()
 	if err != nil {
+		slog.Error("| Error parsing email form submission |", "err", err)
 		http.Error(w, "Failed to parse form data", http.StatusBadRequest)
 		return
 	}
-	setImmichConfig(r.FormValue("gmail-address"), r.FormValue("gmail-password"))
 
-	// Read new config and return HTML with new config injected
-	//
+	// Do I need to validate submitted values in some way?
+	if err := setImmichConfig(r.FormValue("gmail-address"), r.FormValue("gmail-password")); err != nil {
+		slog.Error("| Failed to set Immich config |", "err", err)
+		http.Error(w, "Failed to set Immich config.", http.StatusInternalServerError)
+		return
+	}
+
+	// The rest of the function below this line should probably be tidied up and refactored
 	config := NixConfig{}
 
 	// Parse settings out of immich-config.json - might need to refactor these 15 lines out into a function to maintan DRY best practice
 	// (Also see repeated code in the "loadCurrentConfig()" function)
 	immich, err := getImmichConfig()
 	if err != nil {
-		fmt.Println("Error parsing Immich Config", err)
+		slog.Error("| Error parisng immich-config.json |", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	config.Email = immich.Notifications.SMTP.Transport.Username
 	if immich.Notifications.SMTP.Transport.Password != "" {
-		// fmt.Println("IF was met")
+		slog.Debug("Contains Password = True")
 		config.EmailPass = true
 	} else {
-		// fmt.Println("ELSE was met")
+		slog.Debug("Contains Password = False")
 		config.EmailPass = false
 	}
 
@@ -605,6 +628,40 @@ func handleEmailPost(
 	tmpl.Execute(w, config)
 }
 
+func handlePoweroff(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	slog.Info("Received Poweroff Request")
+
+	cmd := exec.Command("poweroff")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+	if err != nil {
+		slog.Error("| Error executing poweroff |", "err", err)
+		http.Error(w, "Failed to execute poweroff", http.StatusInternalServerError)
+	}
+}
+
+func handleReboot(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	slog.Info("Received Reboot Request")
+
+	cmd := exec.Command("reboot")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+	if err != nil {
+		slog.Error("| Error executing reboot |", "err", err)
+		http.Error(w, "Failed to execute reboot", http.StatusInternalServerError)
+	}
+}
+
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", handleRoot)
@@ -614,9 +671,15 @@ func main() {
 	mux.HandleFunc("POST /stop", handleStop)
 	mux.HandleFunc("POST /start", handleStart)
 	mux.HandleFunc("POST /update", handleUpdate)
-	// mux.HandleFunc("GET /email", handleEmailGet)
 	mux.HandleFunc("POST /email", handleEmailPost)
+	mux.HandleFunc("POST /poweroff", handlePoweroff)
+	mux.HandleFunc("POST /reboot", handleReboot)
 
-	fmt.Println("Server started at http://localhost:8000")
+	// Probably need a 404/Error page that hyperlinks back to the main page
+
+	// Need to make debug mode dynamic
+	// slog.SetLogLoggerLevel(slog.LevelDebug)
+
+	slog.Info("Server started at http://localhost:8000")
 	http.ListenAndServe("localhost:8000", mux)
 }

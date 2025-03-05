@@ -16,3 +16,12 @@ These to-dos either pre-date the roadmap or have yet to be added to it. This lis
 - [ ] Parse templates at initialization instead of at runtime after core development of templates (thanks to YouTube comment @iskariotski).
 - [ ] Add HTMX and CSS libraries into the source instead of calling from CDNs (eventually, no rush now).
 - [ ] Test Podman as an alternative to Docker.
+- [ ] Function to start/stop tailscale
+- [ ] Function to sign out of tailscale
+- [ ] Function to use tailscale serve for immich
+- [ ] Caddy basic Auth
+- [ ] Cloudflare Tunnel integration - need docs on how to setup with OIDC and split connection in app
+- [ ] Pangolin integration - basic w/ docs for self-hosted VPS
+- [ ] Need to do something about email notifications and admin interface password reset
+- [ ] Re-organize code into multiple files
+- [ ] Create [Unit Tests](https://youtu.be/W4njY-VzkUU)

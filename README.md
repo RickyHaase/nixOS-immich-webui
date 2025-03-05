@@ -19,9 +19,9 @@ Have a "functional" web UI that can display the currently applied NixOS config (
 - [ ] v0.1.0-alpha.2
   - [x] Add functionality to update Immich Email config from web UI
   - [x] Embed template files in the binary
-  - [ ] Add GUI interfaces to power off and restart the server
-  - [ ] Make sure Immich is installed in the expected location before allowing a configuration update to be applied
-  - [ ] Make sure that error handling is actually working as expected
+  - [x] Add GUI interfaces to power off and restart the server
+  - [x] Make sure that error handling is actually working as expected (unit testing not yet setup)
+  - [x] Configured Logging (Info, Error, and Debug levels)
   - [ ] Basic USB-drive backup (a restoration option will NOT be included in this release (all photos will be there on the file system though))
   - [ ] Include documentation and config files necessary to get a working server running
 - [ ] v0.1.0-beta.1
@@ -31,6 +31,7 @@ Have a "functional" web UI that can display the currently applied NixOS config (
   - [ ] Sort out GitHub binary releases
 <!-- - [ ] 0.1.0-beta.2 -->
   <!-- - [ ] Basic deployment mechanism -->
+  <!-- - [ ] Make sure Immich is installed in the expected location before allowing a configuration update to be applied -->
 <!-- - [ ] v0.1.0-rc.1 -->
 
 ## Environment Assumptions

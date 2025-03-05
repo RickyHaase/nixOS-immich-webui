@@ -163,10 +163,30 @@
     <br><small>This is just a placeholder interface. Will implement after the rest of the interface is functional.</small>
     <hr>
     <h2>Server Commands</h2>
-    <button>Poweroff</button>
-    <button>Restart</button>
-    <button>Update</button>
-    <br><small>Does nothing at this time - just placeholders</small>
+    <button onclick="powerAction('poweroff')">Poweroff</button>
+    <button onclick="powerAction('reboot')">Restart</button>
+    <script>
+    function powerAction(action) {
+      const actionText = action === 'reboot' ? 'reboot' : 'poweroff';
+      const confirmMessage = action === 'reboot'
+        ? "This will reboot the server. It will take a minute or two before services become available again."
+        : "This will poweroff the server. You will have to physically press the power button to turn the server back on.";
+
+      if (confirm(confirmMessage)) {
+        fetch(`/${action}`, {
+          method: 'POST'
+        }).then(response => {
+          if (response.ok) {
+            alert(`${actionText.charAt(0).toUpperCase() + actionText.slice(1)} request submitted successfully.`);
+          } else {
+            alert(`Failed to ${actionText} the server.`);
+          }
+        });
+      }
+    }
+    </script>
+    <!-- <button>Update</button> -->
+    <!-- <br><small>Does nothing at this time - just placeholders</small> -->
 
 </body>
 </html>
