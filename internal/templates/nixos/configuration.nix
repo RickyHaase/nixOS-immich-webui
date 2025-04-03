@@ -204,4 +204,8 @@
     # Maybe add ssh and/or serve options
 
   };
+
+  # ====== Backups =======
+  services.udisks2.enable = true;
+  environment.systemPackages = with pkgs; [ zip ];
 }

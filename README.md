@@ -16,14 +16,16 @@ Have a "functional" web UI that can display the currently applied NixOS config (
   - [x] Modify config and write new config to file system from web UI
   - [x] Apply Nix config and issue `nixos-rebuild switch` from web UI (error catching and rollback will NOT be included in this release)
   - [x] Minimal Immich container controls - start/stop, update
-- [ ] v0.1.0-alpha.2
+- [x] v0.1.0-alpha.2
   - [x] Add functionality to update Immich Email config from web UI
   - [x] Embed template files in the binary
   - [x] Add GUI interfaces to power off and restart the server
   - [x] Make sure that error handling is actually working as expected (unit testing not yet setup)
-  - [x] Configured Logging (Info, Error, and Debug levels)
-  - [ ] Basic USB-drive backup (a restoration option will NOT be included in this release (all photos will be there on the file system though))
+  - [x] Configured Logging levels (Info, Error, and Debug) - currently requires hard-coded switch
+  - [x] Basic USB-drive backup (a restoration option will NOT be included in this release (all photos, the config files, and the latest DB Dump will be copied)). See [backups.md](/docs/dev/backups.md)
+- [ ] v0.1.0-alpha.3
   - [ ] Include documentation and config files necessary to get a working server running
+  - [ ] Refactor single main.go into seperate files/modules/componets/whatever Go calls them for better organization and easier maintainability
 - [ ] v0.1.0-beta.1
   - [ ] Get some CSS and make a usable mobile-first UI
   - [ ] Enhance the web UI to be more responsive by using HTMX and modals to minimize page reloads. Ensure this is implemented with progressive enhancement and graceful degradation for clients without JavaScript

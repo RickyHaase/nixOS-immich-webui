@@ -84,6 +84,27 @@ type StorageTemplate struct {
 	Template                string `json:"template"`
 }
 
+type BlockDevice struct {
+	Name      string        `json:"name"`
+	Size      string        `json:"size"`
+	FSType    string        `json:"fstype"`
+	Transport string        `json:"tran"`
+	Model     string        `json:"model"`
+	Label     string        `json:"label"`
+	Children  []BlockDevice `json:"children"`
+}
+
+type LSBLKOutput struct {
+	BlockDevices []BlockDevice `json:"blockdevices"`
+}
+
+type EligibleDisk struct {
+	PartitionLabel string
+	PartitionSize  string
+	Model          string
+	Identifier     string
+}
+
 // Need Default NixOS Config
 // Need Default Immich Config
 // Will need way to apply default configs. Will create default configs and use them when creating the "intial setup" flow
@@ -411,6 +432,193 @@ func setImmichConfig(email string, password string) error {
 	return nil
 }
 
+func getEligibleDisks() ([]EligibleDisk, error) {
+	// Get list of disks plugged into computer
+	//
+	// Return disk label and drive information (disk type, capacity, name maybe?)
+
+	eligibleDisks := []EligibleDisk{}
+
+	cmd := exec.Command("lsblk", "-J", "-o", "NAME,SIZE,FSTYPE,TRAN,MODEL,LABEL")
+	out, err := cmd.Output()
+	if err != nil {
+		slog.Error("Error running lsblk:", "err", err)
+		return eligibleDisks, err
+	}
+
+	var lsblkData LSBLKOutput
+	if err := json.Unmarshal(out, &lsblkData); err != nil {
+		slog.Error("Error parsing JSON:", "err", err)
+		return eligibleDisks, err
+	}
+
+	// Filters out eligible disks (must be connected via usb AND be formatted exfat) before adding relivant info into an array of eligible disks
+	for _, device := range lsblkData.BlockDevices {
+		if device.Transport == "usb" {
+			for _, part := range device.Children {
+				if part.FSType == "exfat" {
+					slog.Debug("Eligible Block Drive Found", "Partition Name", part.Label, "Partition Size", part.Size, "Device Model", device.Model, "Device Name", part.Name)
+					disk := EligibleDisk{part.Label, part.Size, device.Model, part.Name}
+					eligibleDisks = append(eligibleDisks, disk)
+				}
+			}
+		}
+	}
+
+	return eligibleDisks, nil
+}
+
+func backupToUSB(disk string) (string, error) {
+	slog.Debug("backupToUSB() - Start", "disk", disk)
+
+	// Check if /dev/[disk] is mounted
+	mountCheckCmd := exec.Command("lsblk", "-no", "MOUNTPOINT", "/dev/"+disk)
+	mountPoint, err := mountCheckCmd.Output()
+	if err != nil {
+		slog.Error("Error checking if disk is mounted:", "err", err)
+		return "", err
+	}
+	slog.Debug("Mount point check output", "mountPoint", string(mountPoint))
+
+	if len(mountPoint) == 1 && mountPoint[0] == 10 { // Checks that the mountpoint is just an empty line
+		slog.Debug("Disk is not mounted, attempting to mount", "disk", disk)
+		mountCmd := exec.Command("udisksctl", "mount", "-b", "/dev/"+disk)
+		err := mountCmd.Run()
+		if err != nil {
+			slog.Error("Error mounting disk:", "err", err)
+			return "", err
+		}
+
+		mountCheckCmd = exec.Command("lsblk", "-no", "MOUNTPOINT", "/dev/"+disk)
+		mountPoint, err = mountCheckCmd.Output()
+		if err != nil {
+			slog.Error("Error re-checking mount point:", "err", err)
+			return "", err
+		}
+		slog.Debug("Mount point re-check output", "mountPoint", string(mountPoint))
+	}
+
+	mountPointStr := string(mountPoint)
+	mountPointStr = mountPointStr[:len(mountPointStr)-1]
+	slog.Debug("Final mount point", "mountPointStr", mountPointStr)
+
+	// Check if [mountpoint]/immich-server-backup exists
+	backupDir := mountPointStr + "/immich-server-backup"
+	slog.Info("Ensuring backup directory exists...", "backupDir", backupDir)
+	if err := os.MkdirAll(backupDir, 0755); err != nil {
+		slog.Error("Error creating backup directory:", "err", err)
+		return "", err
+	}
+
+	// =============== Config Backups ===================
+	// Create a temporary directory for the backup files
+	tempDir := "/root/tempconfig"
+	slog.Debug("Creating temporary directory for backup files", "tempDir", tempDir)
+	if err := os.MkdirAll(tempDir, 0755); err != nil {
+		slog.Error("Error creating temporary directory:", "err", err)
+		return "", err
+	}
+
+	// Copy the latest immich db dump
+	slog.Debug("Copying latest immich db dump")
+	cmd := exec.Command("sh", "-c", fmt.Sprintf(`cd /tank/immich/backups && cp "$(ls -t /tank/immich/backups/ | head -n 1)" %s/"$(ls -t /tank/immich/backups/ | head -n 1)"`, tempDir))
+	if err := cmd.Run(); err != nil {
+		slog.Error("Error copying latest immich db dump:", "err", err)
+		return "", err
+	}
+
+	// Copy the current immich-config.json
+	slog.Debug("Copying immich-config.json")
+	if err := CopyFile(tankImmich+"immich-config.json", tempDir+"/immich-config.json"); err != nil {
+		slog.Error("Error copying immich-config.json:", "err", err)
+		return "", err
+	}
+
+	// Copy nixos config folder
+	slog.Debug("Copying nixos config folder")
+	cmd = exec.Command("cp", "-r", "/etc/nixos", tempDir+"/nixos")
+	if err := cmd.Run(); err != nil {
+		slog.Error("Error copying nixos config folder:", "err", err)
+		return "", err
+	}
+
+	// Copy immich compose
+	slog.Debug("Copying immich compose")
+	cmd = exec.Command("cp", "-r", immichDir, tempDir+"/immich-app")
+	if err := cmd.Run(); err != nil {
+		slog.Error("Error copying immich compose:", "err", err)
+		return "", err
+	}
+
+	// Add readme
+	slog.Debug("Adding readme file")
+	readmeContent := "For restore instructions, go to https://github.com/rickyhaase/nixos-immich-webui/docs/restore-from-backup"
+	if err := os.WriteFile(tempDir+"/readme.txt", []byte(readmeContent), 0644); err != nil {
+		slog.Error("Error writing readme file:", "err", err)
+		return "", err
+	}
+
+	// Create backup directory on the USB disk
+	configBackupDir := backupDir + "/config"
+	slog.Debug("Creating backup directory on USB disk", "configBackupDir", configBackupDir)
+	if err := os.MkdirAll(configBackupDir, 0755); err != nil {
+		slog.Error("Error creating backup directory on USB disk:", "err", err)
+		return "", err
+	}
+
+	// Potentially a safer method than bash -c... need to look into best practice
+	// Zip the backup files and add to USB disk
+	zipFileName := fmt.Sprintf("\"%s/config-%s.zip\"", configBackupDir, time.Now().Format("2006-01-02"))
+	cmd = exec.Command("bash", "-c", fmt.Sprintf("cd %s && zip -r %s .", tempDir, zipFileName))
+	if err := cmd.Run(); err != nil {
+		slog.Error("Error zipping backup files:", "err", err)
+		return "", err
+	}
+
+	// Potentially a safer method than bash -c... need to look into best practice
+	// Remove temporary files
+	slog.Debug("Removing temporary files", "tempDir", tempDir)
+	cmd = exec.Command("bash", "-c", fmt.Sprintf("rm -rf %s/*", tempDir))
+	// cmd = exec.Command("rm", "-rf", tempDir+"/*")
+	if err := cmd.Run(); err != nil {
+		slog.Error("Error removing temporary files:", "err", err)
+		return "", err
+	}
+
+	// ===================Library Backup with Rsync==========================
+	slog.Debug("Starting rsync for library backup", "source", "/tank/immich/library", "destination", backupDir)
+	cmd = exec.Command("rsync", "-a", "--info=progress2", "--delete", "/tank/immich/library", backupDir)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err = cmd.Run()
+	if err != nil {
+		slog.Error("Error running rsync for library backup:", "err", err)
+		return "", err
+	}
+	slog.Info("Library backup completed successfully")
+
+	// ================= Backups done - can unmount disk =============
+
+	slog.Debug("Unmounting disk", "disk", disk)
+	unmountCmd := exec.Command("udisksctl", "unmount", "-b", "/dev/"+disk)
+	err = unmountCmd.Run()
+	if err != nil {
+		slog.Error("Error unmounting disk:", "err", err)
+		return "", err
+	}
+	slog.Info("Disk unmounted successfully")
+
+	// for i := 0; i <= 100; i++ {
+	// 	fmt.Printf("Progress: %d%%\n", i)
+	// 	time.Sleep(20 * time.Millisecond)
+	// }
+	// fmt.Println("Simulated Backup Complete")
+
+	slog.Debug("backupToUSB() - End")
+	return "backup complete", nil
+}
+
 func handleRoot(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -662,6 +870,122 @@ func handleReboot(
 	}
 }
 
+func handleGetDisks(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	disks, err := getEligibleDisks()
+	if err != nil {
+		slog.Error("Error getting eiligible disks", "err", err)
+	}
+
+	// for _, disk := range disks {
+	// 	fmt.Println(disk.PartitionLabel + " | " + disk.PartitionSize + " | " + disk.Model)
+	// }
+
+	if len(disks) == 0 {
+		slog.Debug("No eligible disks found")
+		htmlStr := `<option>No eligible disks found</option>`
+		tmpl, _ := htmltemplate.New("t").Parse(htmlStr)
+		tmpl.Execute(w, disks)
+		return
+	}
+
+	htmlStr := `
+	{{range .}}
+	<option value={{.Identifier}}>{{.PartitionLabel}} ({{.PartitionSize}}) on {{.Model}}</option>
+	{{end}}
+	`
+	tmpl, _ := htmltemplate.New("t").Parse(htmlStr)
+	tmpl.Execute(w, disks)
+
+}
+
+func handleBackup(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	slog.Info("Received Backup Request")
+
+	err := r.ParseForm()
+	if err != nil {
+		slog.Error("| Error parsing backup form submission |", "err", err)
+		http.Error(w, "Failed to parse form data", http.StatusBadRequest)
+		return
+	}
+
+	fmt.Println(r.FormValue("select-disk"))
+
+	disks, err := getEligibleDisks()
+	if err != nil {
+		slog.Error("| Error getting eiligible disks |", "err", err)
+		http.Error(w, "Error getting eiligible disks", http.StatusInternalServerError)
+		return
+	}
+
+	selectedDisk := r.FormValue("select-disk")
+	matchFound := false
+
+	for _, disk := range disks {
+		if disk.Identifier == selectedDisk {
+			matchFound = true
+			break
+		}
+	}
+
+	if !matchFound {
+		slog.Error("| Invalid disk selection |", "selectedDisk", selectedDisk)
+		http.Error(w, "Disk is not available for backups. Please refresh page and try again.", http.StatusBadRequest)
+		return
+	}
+
+	// Going to need to build this out quite a bit. Need richer responses with full HTML at the least. Ideally, we need something that tracks and passes backup progress along but at the very least need to use hx-indicator to indicate server-side activity
+	backupResult, err := backupToUSB(selectedDisk)
+	if err != nil {
+		slog.Error("| Error backing up to disk |", "err", err)
+		http.Error(w, "Error backing up to disk", http.StatusInternalServerError)
+		return
+	}
+	slog.Info(backupResult)
+
+	// hx-confirm is just temporary for testing... needs to not be that for the confirmation alert lol
+	// Also need to pull out this template and make a global variable - I don't love having slight variations that I have to update each one if I want to change something
+	htmlStr := `
+ 		<label for="select-disk">Select Disk:</label>
+        <select name="select-disk" id="select-disk" hx-get="/disks" hx-trigger="load" hx-confirm="Backup Completed Successfully!">
+            <option>Refresh page to re-load backup options</option>
+        </select>
+        <button id="refresh" type="button" hx-get="/disks" hx-target="#select-disk" hx-swap="innerHTML">Refresh List</button>
+        <button id="start-backup" type="submit" hx-post="/backup" hx-target="#backup-form" hx-confirm="Are you sure you want to start the backup? This may take some time.">Start Backup</button>
+        <br><small>Select backup disk from list. In order for a disk to be eligible, it must be connected via USB and have a partition formatted exFAT.</small>
+	`
+	tmpl, _ := htmltemplate.New("t").Parse(htmlStr)
+	tmpl.Execute(w, "")
+
+}
+
+func handleGetBackupStatus(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	// Function to check for backup status
+
+	// If backup is running, it needs to return an HTML snippet with the backup status
+
+	// If backup is not running, return the normal HTML snippet for the backup form
+	htmlStr := `
+ 		<label for="select-disk">Select Disk:</label>
+        <select name="select-disk" id="select-disk" hx-get="/disks" hx-trigger="load">
+            <option>Requires JavaScript to be Enabled</option>
+        </select>
+        <button id="refresh" type="button" hx-get="/disks" hx-target="#select-disk" hx-swap="innerHTML">Refresh List</button>
+        <button id="start-backup" type="submit" hx-post="/backup" hx-target="#backup-form" hx-confirm="Are you sure you want to start the backup? This may take some time.">Start Backup</button>
+        <br><small>Select backup disk from list. In order for a disk to be eligible, it must be connected via USB and have a partition formatted exFAT.</small>
+	`
+	tmpl, _ := htmltemplate.New("t").Parse(htmlStr)
+	tmpl.Execute(w, "")
+}
+
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", handleRoot)
@@ -674,6 +998,9 @@ func main() {
 	mux.HandleFunc("POST /email", handleEmailPost)
 	mux.HandleFunc("POST /poweroff", handlePoweroff)
 	mux.HandleFunc("POST /reboot", handleReboot)
+	mux.HandleFunc("GET /disks", handleGetDisks)
+	mux.HandleFunc("POST /backup", handleBackup)
+	mux.HandleFunc("GET /backupstatus", handleGetBackupStatus)
 
 	// Probably need a 404/Error page that hyperlinks back to the main page
 

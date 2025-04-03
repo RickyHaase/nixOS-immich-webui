@@ -153,14 +153,17 @@
     <!-- End of currently functional elements -->
 
     <h2>Backup to USB</h2>
-    <label for="select-disk">Select Disk:</label>
-    <select name="select-disk" id="select-disk">
-        <option value="usb-hdd-5tb">USB HDD 5TB</option>
-        <option value="usb-ssd-2tb">USB SSD 2TB</option>
-    </select>
-    <button id="refresh">Refresh List</button>
-    <button id="start-backup">Start Backup</button>
-    <br><small>This is just a placeholder interface. Will implement after the rest of the interface is functional.</small>
+    <form id="backup-form">
+        <p hx-get="backupstatus" hx-trigger="load" target="#backup-form">JavaScript Required for Backup Functionality at this time</p>
+
+        <!-- <label for="select-disk">Select Disk:</label>
+        <select name="select-disk" id="select-disk" hx-get="/disks" hx-trigger="load">
+            <option>Requires JavaScript to be Enabled</option>
+        </select>
+        <button id="refresh" type="button" hx-get="/disks" hx-target="#select-disk" hx-swap="innerHTML">Refresh List</button>
+        <button id="start-backup" type="submit" hx-post="/backup" hx-target="#backup-form" hx-confirm="Are you sure you want to start the backup? This may take some time.">Start Backup</button>
+        <br><small>Select backup disk from list. In order for a disk to be eligible, it must be connected via USB and have a partition formatted exFAT.</small> -->
+    </form>
     <hr>
     <h2>Server Commands</h2>
     <button onclick="powerAction('poweroff')">Poweroff</button>
