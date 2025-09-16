@@ -1,4 +1,4 @@
-# ZFS Setup
+# Storage Setup (ZFS)
 1. Create `/etc/nixos/zfs.nix`
   ```
   networking.hostId = "12345678";
@@ -39,8 +39,10 @@
   zfs create -o recordsize=512K -o compression=lz4 -o copies=2 -o atime=off tank/immich/library
   ```
 
-MAYBE: Create config dataset - compose, .env, Perhaps a config-backup dataset would make more sense - .zips containing compose, env, .nix, and DB backups
+**Optional**: Create config dataset for storing configuration backups:
+```bash
 zfs create -o recordsize=16K -o compression=lz4 -o copies=2 -o atime=off tank/config
+```
 
 ## Future Considerations
 - DB Location: Currently, the storage configuration assumes that there is one boot disk and one storage disk and that the OS and configuration go on the boot disk and the library and DB go on the storage disk.

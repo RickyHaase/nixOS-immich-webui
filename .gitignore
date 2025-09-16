@@ -15,6 +15,7 @@
 !go.mod
 
 !README.md
+!CLAUDE.md
 !LICENSE
 
 !docs/dev/*.md

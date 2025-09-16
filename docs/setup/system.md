@@ -1,10 +1,10 @@
-## Compatability
-Most any system that meets both the nixOS compatability and the Immich minimum specifications should work
+## Compatibility
+Most any system that meets both the NixOS compatibility and the Immich minimum specifications should work.
 
-For now, it's assumed that any system used will have seperate data and boot disks.
+For now, it's assumed that any system used will have separate data and boot disks.
 
 ## Dell Micro PC BIOS Configuration
-- [ ] Secure Boot (disable - nixOS does not have a pre-installed cert on most systems)
+- [ ] Secure Boot (disable - NixOS does not have a pre-installed cert on most systems)
 - [ ] If Dell - System Config->SATA Operation->select AHCI
 - [ ] Power Management->AC Recovery->Power On
 
