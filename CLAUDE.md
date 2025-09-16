@@ -12,11 +12,39 @@
 - Email notification configuration
 - System power management (reboot/poweroff)
 
-### Current Status
+### Current Status & Roadmap
+
 - **Version**: Alpha development (v0.1.0-alpha.2 completed)
 - **Stage**: Active development, not production-ready
 - **Main Branch**: `main`
 - **Current Branch**: `claude-vibe`
+
+#### Roadmap
+
+- **v0.1.0-alpha.1** (Complete)
+  - Single configuration.nix file with stable Immich server config
+  - Immich accessible at http://immich.local, admin UI at http://immich.local:8080
+  - Web UI for viewing/modifying config, applying changes, minimal Immich container controls
+
+- **v0.1.0-alpha.2** (Complete)
+  - Email config via web UI
+  - Embedded template files in binary
+  - Power off/restart server from UI
+  - Logging levels (Info, Error, Debug)
+  - Basic USB backup (photos, config, DB dump)
+
+- **v0.1.0-alpha.3** (Pending)
+  - Documentation and config files for setup
+  - Refactor monolithic main.go into modules/packages
+  - Improved error handling and rollback
+
+- **v0.1.0-beta.1** (Planned)
+  - Mobile-first CSS/UI
+  - Responsive UI with HTMX modals, progressive enhancement
+  - Host system update button
+  - GitHub binary releases
+
+See `/docs/dev/todo.md` for detailed pending features.
 
 ## Project Structure
 
@@ -146,55 +174,24 @@ POST /reboot        # System reboot
 
 ## Development Workflow
 
-### Frontend Development Philosophy
-When adding new UI features, follow the progressive enhancement pattern:
+- **Current**: Single monolithic `main.go` file (1013 lines)
+- **Planned**: Refactor into separate modules/packages for maintainability
+- **Templates**: Embedded in binary, but currently parsed at runtime (initialization parsing planned)
+- **Testing**: Manual testing via web UI and test configs; unit tests planned
+- **Logging**: Structured logging with debug/info/error levels
 
-1. **HTML First**: Create fully functional forms and links
-2. **Add HTMX**: Enhance with `hx-*` attributes for better UX
-3. **Fallback Testing**: Ensure functionality works with JavaScript disabled
-4. **Error Handling**: Provide meaningful feedback for both modes
+### Frontend Development Philosophy
+- Progressive enhancement: Build functional HTML forms first, then enhance with HTMX
+- All core features must work without JavaScript
+- HTMX attributes for AJAX, partial updates, modals, and confirmations
+- Test with and without JavaScript enabled
 
 ### Common Development Tasks
+- Add config options: update structs, parsing, templates, web forms, handlers
+- Add routes: handler function, mux registration, templates, frontend update
+- Add HTMX features: build HTML first, add HTMX, test fallback
+- Testing: Build, run, test via UI and test configs, verify progressive enhancement
 
-#### 1. Adding New Configuration Options
-1. Update `NixConfig` or `ImmichConfig` struct in `main.go:27-44`
-2. Add parsing logic in `loadCurrentConfig()` function
-3. Update NixOS template at `internal/templates/nixos/configuration.nix`
-4. Modify web form in `internal/templates/web/index.html`
-5. Update form handling in `handleSave()` function
-
-#### 2. Adding New Web Routes
-1. Define handler function following pattern: `handleName(w http.ResponseWriter, r *http.Request)`
-2. Add route to mux in `main()` function at `main.go:990-1004`
-3. Add any necessary HTML templates
-4. Update frontend with progressive enhancement (HTMX)
-
-#### 3. Adding HTMX-Enhanced Features
-1. Build functional HTML form/interface first
-2. Add HTMX attributes for enhancement:
-   - `hx-get`, `hx-post` for AJAX requests
-   - `hx-target` for partial page updates
-   - `hx-trigger` for event handling
-   - `hx-confirm` for user confirmations
-3. Test both with and without JavaScript enabled
-4. Ensure server responses work for both traditional and HTMX requests
-
-#### 4. Testing Changes
-```bash
-# Build and test
-go build -o nixos-immich-webui .
-./nixos-immich-webui
-
-# Check functionality at http://localhost:8000
-# Test with NixOS test configuration in test/ directory
-# Test with JavaScript disabled for progressive enhancement
-```
-
-### Code Organization Notes
-- **Current**: Single monolithic `main.go` file (1013 lines)
-- **Planned**: Refactor into separate modules/packages
-- **Templates**: Embedded at compile time, parsed at runtime
-- **Logging**: Structured logging with debug/info/error levels
 
 ## Important Constants and Paths
 
@@ -275,23 +272,31 @@ http.Redirect(w, r, "/", http.StatusSeeOther)
 
 ## Future Development Plans
 
-### Near-term (v0.1.0-alpha.3)
-- Refactor monolithic `main.go` into separate modules
-- Add proper documentation and setup guides
-- Improve error handling and rollback mechanisms
+### Core System
+- Auto-rollback if `nixos-rebuild` fails (timeout and manual rollback)
+- Parse templates at initialization (not runtime)
+- Re-organize code into multiple files/modules
+- Add unit tests
+- Internal backup failsafe (backup server config to data disk, photos to boot disk)
 
-### Medium-term (v0.1.0-beta.1)
-- **Mobile-first CSS implementation**
-- **Enhanced HTMX integration** for:
-  - Real-time backup progress indicators
-  - Modal dialogs for confirmations
-  - Live system status updates
-  - Progressive form validation
-- **Ensure progressive enhancement** throughout the interface
-- Host system update functionality
-- GitHub release automation
+### Frontend & UI
+- Add HTMX and CSS libraries locally (not CDN)
+- Email notifications and admin password reset
+- Caddy basic auth
 
-### Long-term Features
+### Container & Infrastructure
+- Test Podman as alternative to Docker
+
+### Remote Access
+- Tailscale start/stop/sign-out/serve integration
+- Cloudflare Tunnel integration (OIDC, docs)
+- Pangolin integration (basic, docs for self-hosted VPS)
+
+### Medium/Long-term
+- Mobile-first CSS/UI
+- Responsive UI with HTMX modals, progressive enhancement
+- Host system update button
+- GitHub binary releases
 - Full Immich API integration
 - Advanced backup scheduling with HTMX progress tracking
 - Multiple remote access methods
@@ -331,34 +336,37 @@ slog.SetLogLoggerLevel(slog.LevelDebug)
 ### File Paths
 Development mode uses `test/` directories to prevent system modification during development.
 
-## Contributing Guidelines
+## Testing
 
-### Code Style
-- Follow Go standard formatting
-- Use structured logging with `slog`
-- Include error handling for all operations
-- Add debug logging for function entry/exit
-- Use descriptive variable names
-
-### Frontend Guidelines
-- **Progressive enhancement first**: Build without JavaScript, enhance with HTMX
-- **Semantic HTML**: Use proper form elements and semantic markup
-- **Accessibility**: Ensure keyboard navigation and screen reader compatibility
-- **Mobile-first**: Design for mobile devices first, enhance for larger screens
-
-### Testing
-- Test against NixOS test configuration
+- Manual testing via web UI and test configurations
+- Unit tests not yet implemented (planned for next alpha)
 - Verify backup functionality with test USB drives
-- Check all web routes and form submissions
-- **Test without JavaScript** to ensure progressive enhancement
-- Validate NixOS configuration syntax
+- Test all web routes and form submissions
+- Always test with JavaScript disabled to ensure progressive enhancement
 
-### Documentation
-- Update this CLAUDE.md file for significant changes
-- Document new environment requirements
-- Add setup instructions for new features
-- Update roadmap and todo items
-- Document HTMX enhancement patterns
+## Environment Setup
+
+- Requires NixOS system with ZFS pool named "tank"
+- Separate boot and storage drives recommended (SSD for storage)
+- Manual setup: install NixOS, configure ZFS, create datasets, place files/binary in correct folders
+- Immich docker-compose setup in `/root/immich-app/`
+- Tank datasets: `tank/pgdata` and `tank/immich`
+- See `/docs/setup/environment.md` and `/docs/setup/storage.md` for details
+
+## Security Considerations
+
+### Current Security Model
+- Local access only: server binds to `localhost:8000`
+- Reverse proxy: Caddy provides external access at `:8080`
+- No authentication: admin interface currently unauthenticated
+- File permissions: runs as root for system management
+
+### Planned Security Enhancements
+- Caddy basic auth for admin panel
+- Email notification and password reset for admin
+- OIDC integration for Cloudflare tunnel access
+- Tailscale-only admin access option
+- Config validation and sanitization
 
 ---
 

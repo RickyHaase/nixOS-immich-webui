@@ -24,18 +24,20 @@ This document tracks development tasks that are either in progress or planned fo
 - [ ] Parse templates at initialization instead of at runtime after core development of templates (thanks to YouTube comment @iskariotski)
 - [ ] Re-organize code into multiple files
 - [ ] Create [Unit Tests](https://youtu.be/W4njY-VzkUU)
+- [ ] Internal Backups as a failsafe incase one internal disk dies and the users have not performed proper backups to external media (backup server config to data disk and photos to boot disk (configurable with re-encoded files based on boot disk side))
 
 ### Frontend & UI
 - [ ] Add HTMX and CSS libraries into the source instead of calling from CDNs (eventually, no rush now)
 - [ ] Need to do something about email notifications and admin interface password reset
 - [ ] Caddy basic Auth
+- [ ] Add a check for the correct ZFS datasets and display a message along the lines of "please setup storage - check guide [here]" if the correct storage configuration is not found. At this time, this is an intentional design decision as a barrier to entry to make sure there is someone involved in the initial setup who can at least follow written instructions to setup/manage ZFS pools. This means that if everything gets toasted, there's atleast a chance of knowing someone who can mount the pool and pull photos (even if with written instructions)
 
-### Container & Infrastructure  
+### Container & Infrastructure
 - [ ] Test Podman as an alternative to Docker
 
 ### Remote Access
 - [ ] Function to start/stop tailscale
-- [ ] Function to sign out of tailscale  
+- [ ] Function to sign out of tailscale
 - [ ] Function to use tailscale serve for immich
 - [ ] Cloudflare Tunnel integration - need docs on how to setup with OIDC and split connection in app
 - [ ] Pangolin integration - basic w/ docs for self-hosted VPS
