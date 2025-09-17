@@ -39,9 +39,10 @@
   zfs create -o recordsize=512K -o compression=lz4 -o copies=2 -o atime=off tank/immich/library
   ```
 
-**Optional**: Create config dataset for storing configuration backups:
-```bash
-zfs create -o recordsize=16K -o compression=lz4 -o copies=2 -o atime=off tank/config
+7. Create config datasets
+```
+zfs create -o compression=lz4 -o copies=2 tank/config-backups
+zfs create -o compression=lz4 -o copies=2 tank/immich-config
 ```
 
 ## Future Considerations
