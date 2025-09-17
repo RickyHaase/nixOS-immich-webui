@@ -1,0 +1,33 @@
+{
+  "backup": {
+    "database": {
+      "cronExpression": "0 02 * * *",
+      "enabled": true,
+      "keepLastAmount": 14
+    }
+  },
+  "notifications": {
+    "smtp": {
+      "enabled": true,
+      "from": "Immich Server \u003cexample@gmail.com\u003e",
+      "replyTo": "",
+      "transport": {
+        "host": "smtp.gmail.com",
+        "ignoreCert": false,
+        "password": "examplepassword",
+        "port": 587,
+        "username": "example@gmail.com"
+      }
+    }
+  },
+  "server": {
+    "externalDomain": "http://immich.local",
+    "loginPageMessage": "Admin Panel at http://immich.local:8080",
+    "publicUsers": true
+  },
+  "storageTemplate": {
+    "enabled": true,
+    "hashVerificationEnabled": true,
+    "template": "{{y}}/{{MM}}/{{dd}}/{{filename}}"
+  }
+}

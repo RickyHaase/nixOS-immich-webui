@@ -27,7 +27,7 @@
 #!internal/templates/immich/immich-config.json
 
 !test/nixos/configuration.nix
-#!test/tank/immich/immich-config.json
+!test/tank/immich/immich-config.json
 
 # !Makefile
 
