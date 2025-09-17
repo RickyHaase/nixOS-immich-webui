@@ -47,6 +47,14 @@
 </head>
 <body>
     <h1>NixOS Immich Host Admin Panel</h1>
+    
+    <nav style="margin: 20px 0; padding: 10px; background: #f5f5f5; border-radius: 4px;">
+        <strong>Navigation:</strong>
+        <a href="/backup-internal" style="margin-left: 15px; color: #0066cc; text-decoration: none;">🔄 Internal Backup System</a>
+        <a href="#immich-control" style="margin-left: 15px; color: #0066cc; text-decoration: none;">📦 Immich Control</a>
+        <a href="#backup-usb" style="margin-left: 15px; color: #0066cc; text-decoration: none;">💾 USB Backup</a>
+        <a href="#server-commands" style="margin-left: 15px; color: #0066cc; text-decoration: none;">⚙️ Server Commands</a>
+    </nav>
 
     <hr>
 
@@ -102,7 +110,7 @@
 
     <hr>
 
-    <h2>Immich Container Management</h2>
+    <h2 id="immich-control">Immich Container Management</h2>
     <!-- This will certainly be moved back over to the nixos admin panel once I get email notifications configured in some capacity over there... for now tho, with no auto-backups or alerting to be done, I don't need it for the nixos side of things so I'm not going to complicate things -->
     <!-- Will need to get template engine to parse and pre-fill these values... should be easier since file stores in .json -->
     <!-- ***Was in the middle of building out this functionality when time to release came. Server-side code is commented out.*** -->
@@ -152,7 +160,7 @@
 
     <!-- End of currently functional elements -->
 
-    <h2>Backup to USB</h2>
+    <h2 id="backup-usb">Backup to USB</h2>
     <form id="backup-form">
         <p hx-get="backupstatus" hx-trigger="load" target="#backup-form">JavaScript Required for Backup Functionality at this time</p>
 
@@ -165,7 +173,7 @@
         <br><small>Select backup disk from list. In order for a disk to be eligible, it must be connected via USB and have a partition formatted exFAT.</small> -->
     </form>
     <hr>
-    <h2>Server Commands</h2>
+    <h2 id="server-commands">Server Commands</h2>
     <button onclick="powerAction('poweroff')">Poweroff</button>
     <button onclick="powerAction('reboot')">Restart</button>
     <script>

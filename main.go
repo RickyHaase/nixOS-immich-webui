@@ -10,10 +10,14 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	texttemplate "text/template"
 	"time"
+
+	"github.com/RickyHaase/nixOS-immich-webui/internal/backup/config"
+	"github.com/RickyHaase/nixOS-immich-webui/internal/backup/handlers"
 )
 
 // Perhaps setup an init function that checks if binary is running in dev or prod to set these paths
@@ -987,7 +991,47 @@ func handleGetBackupStatus(
 }
 
 func main() {
+	// Initialize backup system
+	backupConfig, err := config.LoadConfig("")
+	if err != nil {
+		slog.Error("Failed to load backup configuration", "err", err)
+		// Use default configuration if load fails
+		backupConfig = config.GetDefaultConfig()
+	}
+
+	// Ensure backup directories exist
+	if err := backupConfig.EnsureDirectories(); err != nil {
+		slog.Warn("Failed to create backup directories", "err", err)
+	}
+
+	// Parse backup templates
+	backupTemplates := make(map[string]*htmltemplate.Template)
+	backupTemplateFiles := []string{
+		"internal/templates/web/backup_dashboard.html",
+		"internal/templates/web/backup_config.html",
+	}
+
+	for _, tmplFile := range backupTemplateFiles {
+		tmplName := filepath.Base(tmplFile)
+		tmplName = tmplName[:len(tmplName)-5] // Remove .html extension
+		
+		tmpl, err := htmltemplate.ParseFS(templates, tmplFile)
+		if err != nil {
+			slog.Error("Failed to parse backup template", "template", tmplFile, "err", err)
+		} else {
+			backupTemplates[tmplName] = tmpl
+		}
+	}
+
+	// Initialize backup handlers
+	backupHandlers, err := handlers.NewBackupHandlers(backupConfig, backupTemplates)
+	if err != nil {
+		slog.Error("Failed to initialize backup handlers", "err", err)
+	}
+
 	mux := http.NewServeMux()
+	
+	// Existing routes
 	mux.HandleFunc("GET /{$}", handleRoot)
 	mux.HandleFunc("POST /save", handleSave)
 	mux.HandleFunc("POST /apply", handleApply)
@@ -1002,11 +1046,27 @@ func main() {
 	mux.HandleFunc("POST /backup", handleBackup)
 	mux.HandleFunc("GET /backupstatus", handleGetBackupStatus)
 
+	// New internal backup system routes
+	if backupHandlers != nil {
+		mux.HandleFunc("GET /backup-internal", backupHandlers.HandleBackupDashboard)
+		mux.HandleFunc("GET /backup-internal/config", backupHandlers.HandleBackupConfig)
+		mux.HandleFunc("POST /backup-internal/config", backupHandlers.HandleBackupConfigSave)
+		mux.HandleFunc("POST /backup-internal/jobs/create", backupHandlers.HandleCreateJob)
+		mux.HandleFunc("POST /backup-internal/jobs/{id}/start", backupHandlers.HandleStartJob)
+		mux.HandleFunc("POST /backup-internal/jobs/{id}/stop", backupHandlers.HandleStopJob)
+		mux.HandleFunc("GET /backup-internal/jobs/{id}/status", backupHandlers.HandleJobStatus)
+		mux.HandleFunc("GET /backup-internal/storage", backupHandlers.HandleStorageInfo)
+		mux.HandleFunc("DELETE /backup-internal/jobs/{id}", backupHandlers.HandleDeleteJob)
+	}
+
 	// Probably need a 404/Error page that hyperlinks back to the main page
 
 	// Need to make debug mode dynamic
 	// slog.SetLogLoggerLevel(slog.LevelDebug)
 
 	slog.Info("Server started at http://localhost:8000")
+	if backupHandlers != nil {
+		slog.Info("Internal backup system initialized successfully")
+	}
 	http.ListenAndServe("localhost:8000", mux)
 }
