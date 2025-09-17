@@ -24,7 +24,7 @@ This document tracks development tasks that are either in progress or planned fo
 - [ ] Parse templates at initialization instead of at runtime after core development of templates (thanks to YouTube comment @iskariotski)
 - [ ] Re-organize code into multiple files
 - [ ] Create [Unit Tests](https://youtu.be/W4njY-VzkUU)
-- [ ] Internal Backups as a failsafe incase one internal disk dies and the users have not performed proper backups to external media (backup server config to data disk and photos to boot disk (configurable with re-encoded files based on boot disk side))
+- [ ] Implement automatic internal backups as a failsafe in case an internal disk fails and users have not backed up to external media. The system should automatically back up server config to the data disk and photos to the boot disk (with optional re-encoding for boot disk storage). This feature should be pre-configured via the config file and run automatically, without user customization (maybe an enable/disable in the GUI for "weekly internal backups").
 
 ### Frontend & UI
 - [ ] Add HTMX and CSS libraries into the source instead of calling from CDNs (eventually, no rush now)
