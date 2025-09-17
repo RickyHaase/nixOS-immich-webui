@@ -28,6 +28,9 @@
 !test/nixos/configuration.nix
 #!test/tank/immich/immich-config.json
 
+!example/etc/nixos/*
+!example/tank/immich-config/*
+
 # !Makefile
 
 # ...even if they are in subdirectories
