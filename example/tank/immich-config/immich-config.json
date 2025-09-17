@@ -1,0 +1,34 @@
+{
+  "backup": {
+    "database": {
+      "cronExpression": "0 02 * * *",
+      "enabled": true,
+      "keepLastAmount": 14
+    }
+  },
+  "notifications": {
+    "smtp": {
+      "enabled": true,
+      "from": "Immich <test@gmail.com>",
+      "replyTo": "",
+      "transport": {
+        "host": "smtp.gmail.com",
+        "ignoreCert": false,
+        "password": "testPass",
+        "port": 587,
+        "username": "test@gmail.com"
+      }
+    }
+  },
+  "server": {
+    "externalDomain": "http://immich.local",
+    "loginPageMessage": "Admin Panel at http://immich.local:8080",
+    "publicUsers": true
+  },
+  "storageTemplate": {
+    "enabled": true,
+    "hashVerificationEnabled": true,
+    "template": "{{y}}/{{MM}}/{{dd}}/{{filename}}"
+  }
+}
+// not sure if this was/is working
