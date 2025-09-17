@@ -85,7 +85,7 @@ nixOS-immich-webui/
 - **Base Layer**: Semantic HTML forms with full functionality without JavaScript
 - **Enhancement Layer**: HTMX 2.0.4 for dynamic interactions and reduced page reloads
 - **Styling**: Vanilla CSS (mobile-first approach planned)
-- **Progressive Enhancement Philosophy**: 
+- **Progressive Enhancement Philosophy**:
   - All core functionality works without JavaScript
   - HTMX enhances UX with AJAX requests, partial page updates, and real-time status updates
   - Graceful degradation ensures accessibility and robustness
@@ -371,3 +371,6 @@ Development mode uses `test/` directories to prevent system modification during 
 ---
 
 *This documentation reflects the current state of the project as of the latest commit. The project is in active alpha development with frequent changes expected. HTMX integration follows progressive enhancement principles to ensure robust functionality across all client capabilities.*
+
+- The example directory at the root of the project includes example configuration files that are stored on the system and are necessary for understanding how the whole server operates (nixOS and Immich servers) and thus what the program needs to do to manage them. The folder structure mimics that of the system (etc/nixos -> /etc/nixos and tank/immich-config -> zfs dataset tank/immich-config)
+- Don't build and then run go binaries, just run them directly using `go run`
