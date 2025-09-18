@@ -1,6 +1,6 @@
 # Immich Docker Configuration
 
-This directory contains the Docker Compose configuration for running Immich. These files should be placed in `/root/immich-app/` on your target system.
+This directory contains the Docker Compose configuration for running Immich. These files should be placed in `/tank/immich-config/` on your target system (on the ZFS dataset for backup protection).
 
 ## Setup Instructions
 
@@ -8,12 +8,12 @@ This directory contains the Docker Compose configuration for running Immich. The
 
 Copy the docker-compose.yml to your Immich application directory:
 ```bash
-cp docker-compose.yml /root/immich-app/
+cp docker-compose.yml /tank/immich-config/
 ```
 
 ### 2. Create Environment File
 
-Create `/root/immich-app/.env` with your configuration:
+Create `/tank/immich-config/.env` with your configuration:
 ```bash
 # Database Configuration
 DB_PASSWORD=postgres
@@ -35,7 +35,7 @@ IMMICH_VERSION=release
 
 The configuration expects this directory structure:
 ```
-/root/immich-app/
+/tank/immich-config/
 ├── docker-compose.yml
 ├── .env
 └── (optional hwaccel files)

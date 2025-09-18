@@ -120,7 +120,9 @@ nixos-rebuild switch
 ### Create Immich Directory
 
 ```bash
-mkdir -p /root/immich-app
+# Immich config directory should already exist from ZFS dataset setup
+# If it doesn't exist, create it:
+mkdir -p /tank/immich-config
 ```
 
 ### Copy Docker Configuration
@@ -128,12 +130,12 @@ mkdir -p /root/immich-app
 Copy the Immich Docker configuration files:
 
 ```bash
-cp /path/to/nixOS-immich-webui/example/tank/immich-config/docker-compose.yml /root/immich-app/
+cp /path/to/nixOS-immich-webui/example/tank/immich-config/docker-compose.yml /tank/immich-config/
 ```
 
 ### Configure Environment Variables
 
-Create `/root/immich-app/.env` with your configuration:
+Create `/tank/immich-config/.env` with your configuration:
 
 ```bash
 # Database
@@ -304,7 +306,7 @@ After successful deployment:
 ## File Locations Reference
 
 - **NixOS Config**: `/etc/nixos/`
-- **Immich App**: `/root/immich-app/`
+- **Immich App**: `/tank/immich-config/`
 - **WebUI Binary**: `/root/nixos-immich-webui`
 - **Photo Storage**: `/tank/immich/library/`
 - **Database**: `/tank/pgdata/`

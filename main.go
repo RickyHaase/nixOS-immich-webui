@@ -18,7 +18,7 @@ import (
 
 // Perhaps setup an init function that checks if binary is running in dev or prod to set these paths
 const nixDir string = "test/nixos/"           //to actually modify the nix config used by the system, this const needs to be set for "/etc/nixos/"
-const immichDir string = "/root/immich-app/"  //not certain where this will be in final prod but for now it's /root/immich-app
+const immichDir string = "/tank/immich-config/"  //docker-compose.yml and .env stored on tank dataset for backup protection
 const tankImmich string = "test/tank/immich/" //really only for immich-config.json. Not certain where this will end up in the end
 
 //go:embed internal/templates

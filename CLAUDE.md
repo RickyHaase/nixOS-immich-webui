@@ -134,7 +134,7 @@ go build -o nixos-immich-webui .
 The application expects:
 1. NixOS system with ZFS pool named "tank"
 2. Binary placed in `/root/`
-3. Immich docker-compose setup in `/root/immich-app/`
+3. Immich docker-compose setup in `/tank/immich-config/`
 4. Tank datasets: `tank/pgdata` and `tank/immich`
 
 ### Development Mode
@@ -197,7 +197,7 @@ POST /reboot        # System reboot
 
 ```go
 const nixDir string = "test/nixos/"          # Development: test/, Production: "/etc/nixos/"
-const immichDir string = "/root/immich-app/" # Immich docker-compose location
+const immichDir string = "/tank/immich-config/" # Immich docker-compose location
 const tankImmich string = "test/tank/immich/" # Immich config JSON location
 ```
 
@@ -349,7 +349,7 @@ Development mode uses `test/` directories to prevent system modification during 
 - Requires NixOS system with ZFS pool named "tank"
 - Separate boot and storage drives recommended (SSD for storage)
 - Manual setup: install NixOS, configure ZFS, create datasets, place files/binary in correct folders
-- Immich docker-compose setup in `/root/immich-app/`
+- Immich docker-compose setup in `/tank/immich-config/`
 - Tank datasets: `tank/pgdata` and `tank/immich`
 - See `/docs/setup/environment.md` and `/docs/setup/storage.md` for details
 

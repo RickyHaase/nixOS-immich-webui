@@ -23,7 +23,7 @@ test/
   The `test` directory allows developers to experiment and validate changes without impacting the production system or real data.
 
 - **Mirrored Structure:**  
-  The layout closely mirrors the actual deployment structure (`/etc/nixos/`, `/root/immich-app/`, ZFS datasets) to ensure realistic testing and smooth transitions to production.
+  The layout closely mirrors the actual deployment structure (`/etc/nixos/`, `/tank/immich-config/`, ZFS datasets) to ensure realistic testing and smooth transitions to production.
 
 - **Config & Data Management:**  
   Temporary and backup files (`*.old`, `*.tmp`) are used to support atomic operations, rollback, and safe config switching during development.

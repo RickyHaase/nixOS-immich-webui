@@ -28,7 +28,7 @@
       ExecStart = "${pkgs.docker}/bin/docker compose up";
       ExecStop = "${pkgs.docker}/bin/docker compose down";
       Restart = "always";
-      WorkingDirectory = "/root/immich-app";
+      WorkingDirectory = "/tank/immich-config";
       TimeoutStopSec = "90";
     };
   };
