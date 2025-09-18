@@ -1,7 +1,79 @@
-This folder is representative of a folder/dataset that should exist on tank
+# Immich Docker Configuration
 
-I'm not sure if it will be populated by files from Immich or files embedded in the binary during setup
+This directory contains the Docker Compose configuration for running Immich. These files should be placed in `/root/immich-app/` on your target system.
 
-For now, these are the example files required to start up and run Immich. Instructions on what do to with these files can be found in the setup documentation
+## Setup Instructions
 
-NOTE: current files are outdated and are what I had working back during the last time I worked on this project - I am just getting everything into the repo before I continue to make progress.
+### 1. Copy Files to System
+
+Copy the docker-compose.yml to your Immich application directory:
+```bash
+cp docker-compose.yml /root/immich-app/
+```
+
+### 2. Create Environment File
+
+Create `/root/immich-app/.env` with your configuration:
+```bash
+# Database Configuration
+DB_PASSWORD=postgres
+DB_USERNAME=postgres
+DB_DATABASE_NAME=immich
+
+# Storage Locations (ZFS datasets)
+UPLOAD_LOCATION=/tank/immich/library
+DB_DATA_LOCATION=/tank/pgdata
+
+# Immich Version
+IMMICH_VERSION=release
+
+# Optional: GPU acceleration
+# CUDA_VISIBLE_DEVICES=all
+```
+
+### 3. Directory Structure
+
+The configuration expects this directory structure:
+```
+/root/immich-app/
+├── docker-compose.yml
+├── .env
+└── (optional hwaccel files)
+
+/tank/immich/library/     # Photo storage (ZFS dataset)
+/tank/pgdata/             # Database storage (ZFS dataset)
+/tank/immich-config/      # Config backup location
+```
+
+### 4. Starting Immich
+
+The Immich containers are managed by the systemd service defined in `immich.nix`:
+```bash
+# Start Immich
+systemctl start immich-app
+
+# Enable autostart
+systemctl enable immich-app
+
+# Check status
+systemctl status immich-app
+```
+
+## Configuration Notes
+
+- The docker-compose.yml uses environment variables from `.env`
+- Storage locations map to ZFS datasets for data protection
+- Database includes vector extension for ML features
+- Redis provides caching for better performance
+- Health checks ensure service reliability
+
+## Updating Immich
+
+To update Immich to the latest version:
+1. Update `IMMICH_VERSION` in `.env` (or leave as `release` for latest)
+2. Use the WebUI update function or restart the service:
+   ```bash
+   systemctl restart immich-app
+   ```
+
+For complete setup instructions, see the [Deployment Guide](../../docs/setup/deployment.md).

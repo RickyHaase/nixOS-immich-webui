@@ -34,6 +34,7 @@ This document tracks development tasks that are either in progress or planned fo
 
 ### Container & Infrastructure
 - [ ] Test Podman as an alternative to Docker
+- [ ] Consider including Cockpit as a read-only server status admin page... might just be something to include in the example admin.nix file
 
 ### Remote Access
 - [ ] Function to start/stop tailscale
