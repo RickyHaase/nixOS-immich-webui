@@ -11,6 +11,11 @@
 !/.gitignore
 
 !*.go
+!internal/config/*.go
+!internal/handlers/*.go
+!internal/services/*.go
+!internal/system/*.go
+!internal/templates/*.go
 !go.sum
 !go.mod
 
