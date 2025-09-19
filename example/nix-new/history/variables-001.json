@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "version": "001",
+    "timestamp": "2024-09-15T10:30:00Z",
+    "description": "Initial Immich server setup"
+  },
+  "system": {
+    "timeZone": "UTC",
+    "autoUpgrade": false,
+    "upgradeTime": "03:00",
+    "upgradeLower": "03:30", 
+    "upgradeUpper": "04:00"
+  },
+  "networking": {
+    "hostName": "immich",
+    "hostId": "12345678"
+  },
+  "remoteAccess": {
+    "tailscale": {
+      "enable": false,
+      "authKey": ""
+    }
+  },
+  "email": {
+    "address": "",
+    "passwordSet": false
+  },
+  "storage": {
+    "zfs": {
+      "poolName": "tank",
+      "autoScrub": true,
+      "snapshots": {
+        "hourly": 24,
+        "daily": 7,
+        "weekly": 1,
+        "monthly": 1,
+        "yearly": 0
+      }
+    }
+  },
+  "immich": {
+    "workingDirectory": "/root/immich-app",
+    "dockerTimeout": "90",
+    "autoPruneSchedule": "monthly"
+  },
+  "ports": {
+    "immichInternal": 2283,
+    "adminPanel": 8080,
+    "webPublic": 80
+  },
+  "firewall": {
+    "allowPing": true,
+    "allowedTCPPorts": [80, 8080]
+  }
+}

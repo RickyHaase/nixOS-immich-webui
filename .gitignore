@@ -37,6 +37,11 @@
 !example/etc/nixos/*
 !example/tank/immich-config/*
 
+!example/nix-new/*
+!example/nix-new/history/*
+!example/nix-new-2/*
+!example/nix-new-3/*
+
 # !Makefile
 
 # ...even if they are in subdirectories

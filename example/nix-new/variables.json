@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "version": "003",
+    "timestamp": "2024-09-18T16:45:00Z",
+    "description": "Immich server configuration variables"
+  },
+  "system": {
+    "timeZone": "America/New_York",
+    "autoUpgrade": true,
+    "upgradeTime": "02:00",
+    "upgradeLower": "02:30",
+    "upgradeUpper": "03:00"
+  },
+  "networking": {
+    "hostName": "immich",
+    "hostId": "12345678"
+  },
+  "remoteAccess": {
+    "tailscale": {
+      "enable": true,
+      "authKey": "tskey-auth-example123-abc456def"
+    }
+  },
+  "email": {
+    "address": "admin@example.com",
+    "passwordSet": true
+  },
+  "storage": {
+    "zfs": {
+      "poolName": "tank",
+      "autoScrub": true,
+      "snapshots": {
+        "hourly": 24,
+        "daily": 7,
+        "weekly": 0,
+        "monthly": 0,
+        "yearly": 0
+      }
+    }
+  },
+  "immich": {
+    "workingDirectory": "/root/immich-app",
+    "dockerTimeout": "90",
+    "autoPruneSchedule": "monthly"
+  },
+  "ports": {
+    "immichInternal": 2283,
+    "adminPanel": 8080,
+    "webPublic": 80
+  },
+  "firewall": {
+    "allowPing": true,
+    "allowedTCPPorts": [80, 8080]
+  }
+}
