@@ -11,10 +11,16 @@
 !/.gitignore
 
 !*.go
+!internal/config/*.go
+!internal/handlers/*.go
+!internal/services/*.go
+!internal/system/*.go
+!internal/templates/*.go
 !go.sum
 !go.mod
 
 !README.md
+!CLAUDE.md
 !LICENSE
 
 !docs/dev/*.md
@@ -26,7 +32,7 @@
 #!internal/templates/immich/immich-config.json
 
 !test/nixos/configuration.nix
-#!test/tank/immich/immich-config.json
+!test/tank/immich/immich-config.json
 
 !example/etc/nixos/*
 !example/tank/immich-config/*

@@ -24,13 +24,19 @@ Have a "functional" web UI that can display the currently applied NixOS config (
   - [x] Configured Logging levels (Info, Error, and Debug) - currently requires hard-coded switch
   - [x] Basic USB-drive backup (a restoration option will NOT be included in this release (all photos, the config files, and the latest DB Dump will be copied)). See [backups.md](/docs/dev/backups.md)
 - [ ] v0.1.0-alpha.3
-  - [ ] Include documentation and config files necessary to get a working server running
-  - [ ] Refactor single main.go into seperate files/modules/componets/whatever Go calls them for better organization and easier maintainability
+  - [x] **Claude Coded** Re-organize documentation and create CLAUDE.md for repo
+  - [x] **Claude Coded** Refactor single main.go into seperate modules for better organization and easier maintainability
+  - [ ] Rebuild nix config files and the system for parsing/updating the config from the nix config program
+  - [ ] Get an updated Immich config and finalize the directory for compose & config storage
+  - [ ] Update backups for new config file locations
+  - [ ] Complete documentation for full server setup and binary build (double check behind Claude Code)
+- [ ] v0.1.0-aplha.4
+  - [ ] Add unit tests
+  - [ ] Add GitHub binary releases
 - [ ] v0.1.0-beta.1
   - [ ] Get some CSS and make a usable mobile-first UI
   - [ ] Enhance the web UI to be more responsive by using HTMX and modals to minimize page reloads. Ensure this is implemented with progressive enhancement and graceful degradation for clients without JavaScript
   - [ ] Add an update button for the host system
-  - [ ] Sort out GitHub binary releases
 <!-- - [ ] 0.1.0-beta.2 -->
   <!-- - [ ] Basic deployment mechanism -->
   <!-- - [ ] Make sure Immich is installed in the expected location before allowing a configuration update to be applied -->

@@ -154,7 +154,7 @@
   #   extraGroups = [ "docker" ];
   # };
 
-  # expects docker-compose.yml and .env file for Immich to be stored in /root/immich-app
+  # expects docker-compose.yml and .env file for Immich to be stored in /tank/immich-config
   # Didn't quite get the systemd service to check and pull this working but decided against it as I'll be managing this through templates contained within the Go binary
   systemd.services.immich-app = {
     description = "Manage Immich Compose Stack";
@@ -167,7 +167,7 @@
       ExecStart = "${pkgs.docker}/bin/docker compose up";
       ExecStop = "${pkgs.docker}/bin/docker compose down";
       Restart = "always";
-      WorkingDirectory = "/root/immich-app";
+      WorkingDirectory = "/tank/immich-config";
       TimeoutStopSec = "90";
     };
   };
