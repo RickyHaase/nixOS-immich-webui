@@ -27,6 +27,7 @@ Have a "functional" web UI that can display the currently applied NixOS config (
   - [ ] Include documentation and config files necessary to get a working server running
   - [ ] Refactor single main.go into seperate files/modules/componets/whatever Go calls them for better organization and easier maintainability
 - [ ] v0.1.0-beta.1
+  - [ ] Update repo name and binary name (needs a better name and a better way to reference project/binary in documentation)
   - [ ] Get some CSS and make a usable mobile-first UI
   - [ ] Enhance the web UI to be more responsive by using HTMX and modals to minimize page reloads. Ensure this is implemented with progressive enhancement and graceful degradation for clients without JavaScript
   - [ ] Add an update button for the host system
