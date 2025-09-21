@@ -103,6 +103,9 @@ Items marked with checkboxes indicate completion status.
 - [ ] Multi-user admin role management
 - [ ] API endpoint versioning strategy
 - [ ] Immich API integration beyond basic container management
+- [ ] The security model could be significantly improved now that I'm not directly editing the .nix files with the program. Could I add permissions to a service account to run `nixos-rebuild -switch` and then use that account run the `nixmich` binary and edit `configuration.json` from a location that does not require elevated permissions?
+  - This makes it such that if an attacker can exploit the program, the absolute most damage they can do is restricted to that particular accounts permissions... maybe tailscale is an attack vector? ZFS snapshots could be protected tho, minimizing data loss
+  - This change would not impact the network security/authentication challenge that is currently inadequately addressed
 
 ---
 

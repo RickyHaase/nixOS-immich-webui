@@ -1,5 +1,9 @@
 { config, pkgs, ... }:
 
+let
+  # Read JSON variables using builtins.fromJSON (consistent pattern)
+  vars = builtins.fromJSON (builtins.readFile ./variables.json);
+in
 {
   virtualisation.docker.enable = true;
   virtualisation.docker.autoPrune.enable = true;

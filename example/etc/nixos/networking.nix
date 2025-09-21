@@ -1,6 +1,10 @@
 { config, pkgs, ... }:
 
 let
+  # Read JSON variables using builtins.fromJSON (consistent pattern)
+  vars = builtins.fromJSON (builtins.readFile ./variables.json);
+  
+  # Static configuration values (not currently templated)
   hostName = "immich-dev-vm";
 in
 {
