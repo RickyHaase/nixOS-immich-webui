@@ -87,3 +87,55 @@ This document outlines the rationale and decisions for file and backup storage l
 ---
 
 *This design ensures robust separation of concerns, maximizes reliability, and simplifies both backup and restore operations for the Immich appliance on NixOS.*
+
+---
+
+## 6. Configuration Management Architecture
+
+**Approach:** JSON with `builtins.fromJSON`
+
+**Files:**
+- `nixconfig.json` (user-configurable settings)
+- Modular `.nix` files (system configuration modules)
+
+**Location:**
+- **System Config Directory:** `/etc/nixos/`
+
+**Rationale:**
+The project evolved from Go templates with regex parsing to a JSON-based approach using NixOS's native `builtins.fromJSON` functionality.
+
+### Why JSON over Go Templates?
+
+| Aspect | Go Templates + Regex | JSON + builtins.fromJSON |
+|--------|---------------------|-------------------------|
+| **Parsing reliability** | Brittle regex patterns | Bulletproof JSON unmarshaling |
+| **Generation complexity** | Template execution + embed.FS | Simple `json.Marshal()` |
+| **Backup strategy** | Multiple template files | Single JSON file |
+| **Rollback process** | Complex template restoration | Simple `.old` file copy |
+| **NixOS integration** | External template system | Native NixOS built-ins |
+| **Debugging** | Template syntax errors | Standard JSON validation |
+| **Maintainability** | Template-struct sync required | Single source of truth |
+
+### Key Benefits
+
+1. **Structured Reliability**: JSON provides type safety and standard validation
+2. **NixOS-Native**: Uses `builtins.fromJSON` and `builtins.readFile` - no external dependencies
+3. **Consistent Pattern**: Every module uses the same 2-line JSON import pattern
+4. **Simple Workflow**: Integrates with existing `switchConfig()` and `applyChanges()` functions
+5. **Modular Organization**: Clear separation of concerns across configuration modules
+
+### Implementation Pattern
+
+Every NixOS module follows this consistent pattern:
+
+```nix
+{ config, pkgs, ... }:
+let
+  vars = builtins.fromJSON (builtins.readFile ./nixconfig.json);
+in
+{
+  # Use vars.section.setting throughout
+}
+```
+
+This approach eliminates complex template parsing while providing the structured configuration management needed for reliable system state parsing, generation, and rollback capabilities.

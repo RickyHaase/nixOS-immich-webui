@@ -5,8 +5,6 @@ import (
 	htmltemplate "html/template"
 	"log/slog"
 	"net/http"
-	"os"
-	texttemplate "text/template"
 
 	"github.com/RickyHaase/nixOS-immich-webui/internal/config"
 	"github.com/RickyHaase/nixOS-immich-webui/internal/system"
@@ -28,12 +26,15 @@ func NewSystemHandler(templates embed.FS) *SystemHandler {
 func (h *SystemHandler) HandleRoot(w http.ResponseWriter, r *http.Request) {
 	slog.Info("| Received Request at root |", "IP", r.Header.Get("X-Forwarded-For"))
 
-	cfg, err := config.LoadCurrentConfig()
+	cfgJSON, err := config.LoadCurrentConfigJSON()
 	if err != nil {
-		slog.Error("| Error loading config |", "err", err)
+		slog.Error("| Error loading JSON config |", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Convert to old format for template compatibility
+	cfg := cfgJSON.ToNixConfig()
 
 	tmpl, err := htmltemplate.ParseFS(h.templates, "web/index.html")
 	if err != nil {
@@ -58,31 +59,35 @@ func (h *SystemHandler) HandleSave(w http.ResponseWriter, r *http.Request) {
 
 	slog.Debug("Received Form", "body", r.Form)
 
-	cfg := &config.NixConfig{
-		TimeZone:    r.FormValue("timezone"),
-		AutoUpgrade: config.ParseBool(r.FormValue("auto-updates")),
-		UpgradeTime: r.FormValue("update-time"),
-		Tailscale:   config.ParseBool(r.FormValue("tailscale")),
-		TSAuthkey:   r.FormValue("tailscale-authkey"),
-	}
+	// Build new JSON configuration structure
+	cfgJSON := &config.ConfigVariables{}
+	cfgJSON.System.TimeZone = r.FormValue("timezone")
+	cfgJSON.System.AutoUpgrade = config.ParseBool(r.FormValue("auto-updates"))
+	cfgJSON.System.UpgradeTime = r.FormValue("update-time")
+	cfgJSON.RemoteAccess.Tailscale.Enable = config.ParseBool(r.FormValue("tailscale"))
+	cfgJSON.RemoteAccess.Tailscale.AuthKey = r.FormValue("tailscale-authkey")
 
-	t1, t2, err := config.GetLowerUpper(cfg.UpgradeTime)
+	t1, t2, err := config.GetLowerUpper(cfgJSON.System.UpgradeTime)
 	if err != nil {
 		slog.Error("| Error calculating time setting |", "err", err)
 		http.Error(w, "Issue with time setting"+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	cfg.UpgradeLower = t1
-	cfg.UpgradeUpper = t2
+	cfgJSON.System.UpgradeLower = t1
+	cfgJSON.System.UpgradeUpper = t2
 
-	slog.Debug("Updated config", "config", cfg)
+	slog.Debug("Updated JSON config", "config", cfgJSON)
 
-	err = h.saveTmpFile(cfg)
+	err = config.SaveConfigJSON(cfgJSON)
 	if err != nil {
-		slog.Error("| Error saving tmp file |", "err", err)
+		slog.Error("| Error saving JSON config |", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Convert to old format for template compatibility
+	cfg := cfgJSON.ToNixConfig()
+
 
 	tmpl, err := htmltemplate.ParseFS(h.templates, "web/save.html")
 	if err != nil {
@@ -98,8 +103,8 @@ func (h *SystemHandler) HandleSave(w http.ResponseWriter, r *http.Request) {
 func (h *SystemHandler) HandleApply(w http.ResponseWriter, r *http.Request) {
 	slog.Info("Received Apply Request")
 
-	if err := system.SwitchConfig(); err != nil {
-		slog.Error("| Error when switching config files |", "err", err)
+	if err := system.SwitchConfigJSON(); err != nil {
+		slog.Error("| Error when switching JSON config files |", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -127,27 +132,3 @@ func (h *SystemHandler) HandleReboot(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// saveTmpFile saves configuration to temporary file
-func (h *SystemHandler) saveTmpFile(cfg *config.NixConfig) error {
-	slog.Debug("saveTmpFile()")
-	tmpl, err := texttemplate.ParseFS(h.templates, "nixos/configuration.nix")
-	if err != nil {
-		slog.Debug("| Error rendering template |", "err", err)
-		return err
-	}
-
-	outFile, err := os.Create(config.NixDir + "configuration.tmp")
-	if err != nil {
-		slog.Debug("| Error creating .tmp file |", "err", err)
-		return err
-	}
-	defer outFile.Close()
-
-	err = tmpl.Execute(outFile, cfg)
-	if err != nil {
-		slog.Debug("| Error writing .tmp file |", "err", err)
-		return err
-	}
-
-	return nil
-}

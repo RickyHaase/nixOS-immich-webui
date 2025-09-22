@@ -28,16 +28,14 @@
 
 !internal/templates/web/index.html
 !internal/templates/web/save.html
-!internal/templates/nixos/configuration.nix
 #!internal/templates/immich/immich-config.json
 
-!test/nixos/configuration.nix
+!test/nixos/nixconfig.json
 !test/tank/immich/immich-config.json
 
 !example/etc/nixos/*
 !example/tank/immich-config/*
 
-# !Makefile
 
 # ...even if they are in subdirectories
 !*/

@@ -10,28 +10,29 @@ import (
 	"github.com/RickyHaase/nixOS-immich-webui/internal/config"
 )
 
-// SwitchConfig backs up current config and replaces with temp config
-func SwitchConfig() error {
-	slog.Debug("switchConfig()")
-	configPath := config.NixDir + "configuration.nix"
-	backupPath := config.NixDir + "configuration.old"
-	tmpPath := config.NixDir + "configuration.tmp"
+// SwitchConfigJSON backs up current JSON config and replaces with temp config
+func SwitchConfigJSON() error {
+	slog.Debug("SwitchConfigJSON()")
+	configPath := config.NixDir + config.ConfigFile
+	backupPath := config.NixDir + config.ConfigFile + ".old"
+	tmpPath := config.NixDir + config.ConfigFile + ".tmp"
 
-	slog.Info("Backing up configuration.nix to configuration.old...")
+	slog.Info("Backing up nixconfig.json to nixconfig.json.old...")
 	if err := config.CopyFile(configPath, backupPath); err != nil {
-		slog.Debug("Error backing up config file", "err", err)
+		slog.Debug("Error backing up JSON config file", "err", err)
 		return err
 	}
 
-	slog.Info("Replacing configuration.nix with configuration.tmp...")
+	slog.Info("Replacing nixconfig.json with nixconfig.json.tmp...")
 	if err := config.CopyFile(tmpPath, configPath); err != nil {
-		slog.Debug("Error replacing config file", "err", err)
+		slog.Debug("Error replacing JSON config file", "err", err)
 		return err
 	}
 
-	slog.Info("Configuration file swtich complete.")
+	slog.Info("JSON configuration file switch complete.")
 	return nil
 }
+
 
 // ApplyChanges runs nixos-rebuild switch to apply configuration changes
 func ApplyChanges() error {

@@ -1,34 +1,50 @@
 { config, pkgs, ... }:
 
+let
+  # Read JSON variables using builtins.fromJSON
+  vars = builtins.fromJSON (builtins.readFile ./nixconfig.json);
+in
 {
-# #Systemd service for go app stored in /root
-    # systemd.services.webui = {
-    #     description = "NixOS-Immich WebUI Service";
-    #     after = [ "network.target" ];
-    #     wantedBy = [ "multi-user.target" ];
-    #     serviceConfig = {
-    #         ExecStart = "/root/ezimmich";
-    #         Restart = "always";
-    #         User = "root";
-    #         WorkingDirectory = "/root";
-    #         StandardOutput = "journal";
-    #         StandardError = "journal";
-    #     };
-    # };
+  # Timezone from JSON
+  time.timeZone = vars.system.timeZone;
 
-# #Enable Unattended Upgrades
-  system.autoUpgrade.enable = true;
-  system.autoUpgrade.dates = "02:00";
+  # Automatic system upgrades from JSON
   system.autoUpgrade = {
-    # flake = inputs.self.outPath;
+    enable = vars.system.autoUpgrade;
+    dates = vars.system.upgradeTime;
     flags = [
       "--update-input"
       "nixpkgs"
       "-L" # print build logs
     ];
     randomizedDelaySec = "45min";
+    allowReboot = vars.system.autoUpgrade;
+    rebootWindow = {
+      lower = vars.system.upgradeLower;
+      upper = vars.system.upgradeUpper;
+    };
   };
-  system.autoUpgrade.allowReboot = true;
-  system.autoUpgrade.rebootWindow.lower = "03:00";
-  system.autoUpgrade.rebootWindow.upper = "04:00";
+
+  # USB device support for backups
+  services.udisks2.enable = true;
+
+  # Essential system packages
+  environment.systemPackages = with pkgs; [
+    zip  # Required for backup functionality
+  ];
+
+  # #Systemd service for go app stored in /root
+      # systemd.services.webui = {
+      #     description = "NixOS-Immich WebUI Service";
+      #     after = [ "network.target" ];
+      #     wantedBy = [ "multi-user.target" ];
+      #     serviceConfig = {
+      #         ExecStart = "/root/ezimmich";
+      #         Restart = "always";
+      #         User = "root";
+      #         WorkingDirectory = "/root";
+      #         StandardOutput = "journal";
+      #         StandardError = "journal";
+      #     };
+      # };
 }

@@ -50,17 +50,40 @@ See `/docs/dev/todo.md` for detailed pending features.
 
 ```
 nixOS-immich-webui/
-├── main.go                          # Single-file Go application (monolithic)
+├── main.go                          # Slim initialization file (49 lines)
 ├── go.mod                          # Go module dependencies
-├── internal/templates/             # Embedded templates
-│   ├── nixos/configuration.nix     # NixOS config template
-│   └── web/                       # HTML templates
-│       ├── index.html             # Main admin interface
-│       └── save.html              # Configuration confirmation page
+├── internal/                       # Modular packages
+│   ├── config/                     # Configuration management
+│   │   ├── types.go               # ConfigVariables & data structures
+│   │   └── parser.go              # JSON parsing & file operations
+│   ├── handlers/                   # HTTP request handlers
+│   │   ├── system.go              # System configuration endpoints
+│   │   ├── immich.go              # Immich service management
+│   │   └── backup.go              # Backup operations
+│   ├── services/                   # Business logic services
+│   │   └── backup.go              # Backup service implementation
+│   ├── system/                     # System command operations
+│   │   └── commands.go            # NixOS & Docker system commands
+│   └── templates/                  # Embedded web templates
+│       ├── embed.go               # Template embedding
+│       └── web/                   # HTML templates
+│           ├── index.html         # Main admin interface
+│           ├── save.html          # Configuration confirmation page
+│           ├── backup_config.html # Backup configuration
+│           └── backup_dashboard.html # Backup status dashboard
+├── example/etc/nixos/             # Example NixOS configuration
+│   ├── nixconfig.json             # JSON configuration file
+│   ├── system.nix                 # System configuration module
+│   ├── networking.nix             # Network configuration module
+│   ├── immich.nix                 # Docker/Immich module
+│   ├── remoteaccess.nix           # Tailscale VPN module
+│   ├── zfs.nix                    # ZFS storage module
+│   └── admin.nix                  # User packages module
 ├── docs/                          # Documentation
 │   ├── dev/                       # Development docs
 │   │   ├── todo.md                # TODO items
 │   │   ├── features.md            # Feature roadmap
+│   │   ├── configuration.md       # Configuration architecture
 │   │   ├── environment.md         # Environment assumptions
 │   │   ├── backups.md             # Backup functionality docs
 │   │   └── considerations.md      # Development considerations
@@ -69,7 +92,9 @@ nixOS-immich-webui/
 │       ├── storage.md             # Storage configuration
 │       └── remote-access.md       # Remote access setup
 └── test/                          # Test configurations
-    └── nixos/configuration.nix    # Test NixOS config
+    └── nixos/                     # Test NixOS configs
+        ├── nixconfig.json         # Test JSON configuration
+        └── configuration.nix      # Legacy test config
 ```
 
 ## Technology Stack
@@ -145,38 +170,70 @@ The application expects:
 ## Key Components
 
 ### Configuration Management
-- **NixConfig struct**: Defines all modifiable NixOS settings
-- **ImmichConfig struct**: Manages Immich-specific configuration
-- **Template processing**: Uses Go templates with embedded files
-- **File operations**: Safe config file switching with backups
+- **config package**: Centralized configuration management with JSON-based approach
+  - **ConfigVariables struct**: Defines all modifiable NixOS settings in JSON format
+  - **ImmichConfig struct**: Manages Immich-specific configuration
+  - **JSON processing**: Uses standard JSON marshaling/unmarshaling with `builtins.fromJSON`
+  - **File operations**: Safe config file switching with `.old` backups
+- **handlers package**: HTTP endpoint handling with clean separation of concerns
+- **services package**: Business logic services for complex operations
+- **system package**: Low-level system command operations
 
 ### Web Interface Routes
+
+#### SystemHandler Routes
 ```go
-GET  /{$}           # Main admin panel
-POST /save          # Save configuration
-POST /apply         # Apply NixOS configuration
-GET  /status        # Immich service status
-POST /start         # Start Immich service
-POST /stop          # Stop Immich service
-POST /update        # Update Immich containers
-POST /email         # Configure email settings
-GET  /disks         # List eligible USB disks
-POST /backup        # Start USB backup
-POST /poweroff      # System poweroff
-POST /reboot        # System reboot
+GET  /{$}           # Main admin panel (HandleRoot)
+POST /save          # Save configuration (HandleSave)
+POST /apply         # Apply NixOS configuration (HandleApply)
+POST /poweroff      # System poweroff (HandlePoweroff)
+POST /reboot        # System reboot (HandleReboot)
 ```
 
-### System Integration Functions
-- **NixOS management**: `switchConfig()`, `applyChanges()`
-- **Docker management**: `immichService()`, `updateImmichContainer()`
-- **Backup operations**: `backupToUSB()`, `getEligibleDisks()`
-- **File operations**: `CopyFile()`, configuration parsing functions
+#### ImmichHandler Routes
+```go
+GET  /status        # Immich service status (HandleStatus)
+POST /start         # Start Immich service (HandleStart)
+POST /stop          # Stop Immich service (HandleStop)
+POST /update        # Update Immich containers (HandleUpdate)
+POST /email         # Configure email settings (HandleEmailPost)
+```
+
+#### BackupHandler Routes
+```go
+GET  /disks         # List eligible USB disks (HandleGetDisks)
+POST /backup        # Start USB backup (HandleBackup)
+GET  /backupstatus  # Backup operation status (HandleGetBackupStatus)
+```
+
+### Package Architecture
+
+#### config package
+- **Configuration management**: `LoadCurrentConfigJSON()`, `SaveConfigJSON()`
+- **Data structures**: `ConfigVariables`, `ImmichConfig` structs
+- **File operations**: `CopyFile()`, JSON parsing functions
+- **Utility functions**: `ParseBool()`, `GetLowerUpper()`
+
+#### handlers package
+- **SystemHandler**: Configuration save/apply, system power management
+- **ImmichHandler**: Service status, start/stop/update, email configuration
+- **BackupHandler**: USB backup operations, disk management
+
+#### services package
+- **BackupService**: Business logic for backup operations
+
+#### system package
+- **NixOS management**: `SwitchConfigJSON()`, `ApplyChanges()`
+- **Docker management**: `ImmichService()`, `UpdateImmichContainer()`
+- **System operations**: `PowerOff()`, `Reboot()`, `GetStatus()`
+- **Backup operations**: `GetEligibleDisks()`
 
 ## Development Workflow
 
-- **Current**: Single monolithic `main.go` file (1013 lines)
-- **Planned**: Refactor into separate modules/packages for maintainability
-- **Templates**: Embedded in binary, but currently parsed at runtime (initialization parsing planned)
+- **Architecture**: Modular package structure with clean separation of concerns
+- **main.go**: Slim 49-line initialization file handling only routing and service initialization
+- **internal packages**: 1041 total lines across specialized modules
+- **Configuration**: JSON-based with `builtins.fromJSON` pattern across modular .nix files
 - **Testing**: Manual testing via web UI and test configs; unit tests planned
 - **Logging**: Structured logging with debug/info/error levels
 
@@ -187,19 +244,29 @@ POST /reboot        # System reboot
 - Test with and without JavaScript enabled
 
 ### Common Development Tasks
-- Add config options: update structs, parsing, templates, web forms, handlers
-- Add routes: handler function, mux registration, templates, frontend update
-- Add HTMX features: build HTML first, add HTMX, test fallback
-- Testing: Build, run, test via UI and test configs, verify progressive enhancement
+- **Add config options**: Update ConfigVariables struct in `config/types.go`, modify handlers in `handlers/` package, update web forms and templates
+- **Add routes**: Create handler methods in appropriate handler files, register in `main.go` routing
+- **Add business logic**: Implement in `services/` package, consume from handlers
+- **Add system operations**: Implement in `system/commands.go`, call from services or handlers
+- **Add HTMX features**: Build HTML first in templates, add HTMX, test fallback
+- **Testing**: Build, run, test via UI and test configs, verify progressive enhancement
+- **Update NixOS modules**: Add new JSON fields to relevant .nix files using `vars.section.setting` pattern
 
 
 ## Important Constants and Paths
 
+### config package constants
 ```go
-const nixDir string = "test/nixos/"          # Development: test/, Production: "/etc/nixos/"
-const immichDir string = "/tank/immich-config/" # Immich docker-compose location
-const tankImmich string = "test/tank/immich/" # Immich config JSON location
+const NixDir string = "test/nixos/"           # Development: test/, Production: "/etc/nixos/"
+const ConfigFile string = "nixconfig.json"    # JSON configuration file
+const ImmichDir string = "/tank/immich-config/" # Immich docker-compose location
+const TankImmich string = "test/tank/immich/" # Immich config JSON location
 ```
+
+### Key file locations
+- **Configuration**: `nixconfig.json` (replaces template-based approach)
+- **Backups**: `nixconfig.json.old` (rollback files)
+- **NixOS modules**: Modular `.nix` files using `builtins.fromJSON`
 
 ## Security Considerations
 
@@ -248,15 +315,36 @@ slog.Debug("functionName()", "param", paramValue)
 slog.Error("| Error description |", "err", err)
 ```
 
-### Template Execution
+### JSON Configuration Handling
 ```go
-tmpl, err := htmltemplate.ParseFS(templates, "internal/templates/web/file.html")
-if err != nil {
-    slog.Error("| Error rendering template |", "err", err)
-    http.Error(w, err.Error(), http.StatusInternalServerError)
-    return
+// Reading current configuration (config package)
+func LoadCurrentConfigJSON() (*ConfigVariables, error) {
+    configPath := NixDir + ConfigFile
+    data, err := os.ReadFile(configPath)
+    if err != nil {
+        return nil, err
+    }
+    var config ConfigVariables
+    return &config, json.Unmarshal(data, &config)
 }
-tmpl.Execute(w, data)
+
+// Saving configuration (config package)
+func SaveConfigJSON(cfg *ConfigVariables) error {
+    data, err := json.MarshalIndent(cfg, "", "  ")
+    if err != nil {
+        return err
+    }
+    tmpPath := NixDir + ConfigFile + ".tmp"
+    return os.WriteFile(tmpPath, data, 0644)
+}
+
+// Handler usage (handlers package)
+func (h *SystemHandler) HandleSave(w http.ResponseWriter, r *http.Request) {
+    cfgJSON := &config.ConfigVariables{}
+    // ... populate from form data ...
+    config.SaveConfigJSON(cfgJSON)
+    system.SwitchConfigJSON()  // Backup and apply
+}
 ```
 
 ### HTMX Response Patterns
@@ -274,8 +362,8 @@ http.Redirect(w, r, "/", http.StatusSeeOther)
 
 ### Core System
 - Auto-rollback if `nixos-rebuild` fails (timeout and manual rollback)
-- Parse templates at initialization (not runtime)
-- Re-organize code into multiple files/modules
+- JSON configuration management (completed)
+- Modular package architecture (completed)
 - Add unit tests
 - Internal backup failsafe (backup server config to data disk, photos to boot disk)
 
