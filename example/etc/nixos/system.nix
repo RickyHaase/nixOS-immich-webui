@@ -2,7 +2,7 @@
 
 let
   # Read JSON variables using builtins.fromJSON
-  vars = builtins.fromJSON (builtins.readFile ./variables.json);
+  vars = builtins.fromJSON (builtins.readFile ./nixconfig.json);
 in
 {
   # Timezone from JSON

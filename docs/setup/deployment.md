@@ -56,11 +56,13 @@ zfs list
 Copy the modular NixOS configuration files to your system:
 
 ```bash
-# Copy all .nix files from the project's example directory
-curl -L https://github.com/immich-app/nixOS-immich-webui/archive/refs/heads/main.tar.gz | tar -xz --strip-components=2 nixOS-immich-webui-main/example/etc/nixos/*.nix -C /etc/nixos/
+# Copy all configuration files from the project's example directory
+curl -L https://github.com/immich-app/nixOS-immich-webui/archive/refs/heads/main.tar.gz | tar -xz --strip-components=2 nixOS-immich-webui-main/example/etc/nixos/ -C /etc/nixos/
 ```
 
-NOTE: this is an untested placehoder method of getting the files where they need to be
+This copies both the `.nix` module files and the `nixconfig.json` configuration file.
+
+NOTE: this is an untested placeholder method of getting the files where they need to be
 
 ### Update configuration.nix
 
@@ -89,9 +91,29 @@ Comment out the default hostname
   # networking.hostName = "nixos";
 ```
 
-### Configure Hostname
+### Configure JSON Settings
 
-Edit `/etc/nixos/networking.nix` and update the hostname:
+Edit `/etc/nixos/nixconfig.json` to customize your installation:
+
+```json
+{
+  "system": {
+    "timeZone": "America/New_York",  # Update to your timezone
+    "autoUpgrade": false,
+    "upgradeTime": "02:00",
+    "upgradeLower": "02:30",
+    "upgradeUpper": "03:00"
+  },
+  "remoteAccess": {
+    "tailscale": {
+      "enable": false,  # Set to true if using Tailscale
+      "authKey": "tskey-auth-placeholder"  # Replace with your auth key
+    }
+  }
+}
+```
+
+Additionally, edit the hostname in `/etc/nixos/networking.nix`:
 
 ```nix
 let
@@ -306,6 +328,8 @@ After successful deployment:
 ## File Locations Reference
 
 - **NixOS Config**: `/etc/nixos/`
+  - `nixconfig.json`: User-configurable settings
+  - `*.nix`: Modular configuration files
 - **Immich App**: `/tank/immich-config/`
 - **WebUI Binary**: `/root/nixos-immich-webui`
 - **Photo Storage**: `/tank/immich/library/`

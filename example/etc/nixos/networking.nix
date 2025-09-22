@@ -2,7 +2,7 @@
 
 let
   # Read JSON variables using builtins.fromJSON (consistent pattern)
-  vars = builtins.fromJSON (builtins.readFile ./variables.json);
+  vars = builtins.fromJSON (builtins.readFile ./nixconfig.json);
   
   # Static configuration values (not currently templated)
   hostName = "immich-dev-vm";

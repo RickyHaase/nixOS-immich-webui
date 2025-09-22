@@ -11,23 +11,28 @@ Items marked with checkboxes indicate completion status.
 
 ## Completed Items
 - [x] Split README into different pages in /docs/dev/ to keep things organized.
-- [x] Although the work has been done, only a monolithic Nix config file has been committed to the repo as it was manageable in one template and one page in the UI (so far).
-  - ~~Create a set of .nix files that define the desired state of the server, organized and compartmentalized logically.~~
-    - ~~configuration.nix with only the imports and default timezone, language, and regional settings configured during install.~~
-    - ~~system.nix with the systemd service for the web server.~~
-    - ~~Additional .nix files as needed to hold the configs that will be modifiable via the web interface.~~
-    - ~~admin.nix for an advanced admin to have a file that won't be touched, allowing them to modify with any additional configs they may want.~~
-      - ~~This could be modifiable in an advanced option to enable/disable SSH without overwriting the entire file, just updating the relevant string.~~
-- [x] Convert the .nix file into a template.
+- [x] Modular NixOS configuration system with JSON-based management
+  - [x] Create a set of .nix files that define the desired state of the server, organized and compartmentalized logically.
+    - [x] configuration.nix with only the imports and default timezone, language, and regional settings configured during install.
+    - [x] system.nix with timezone, auto-upgrade, and backup support configuration.
+    - [x] Additional .nix files as needed to hold the configs that will be modifiable via the web interface.
+    - [x] admin.nix for an advanced admin to have a file that won't be touched, allowing them to modify with any additional configs they may want.
+  - [x] Implement JSON configuration management using `builtins.fromJSON`
+  - [x] Replace Go template system with structured JSON approach
+  - [x] Create `nixconfig.json` with user-configurable settings
+  - [x] Update all .nix modules to use consistent JSON import pattern
+- [x] ~~Convert the .nix file into a template.~~ (Replaced with JSON approach)
 - [x] Build a web page that contains inputs to modify the necessary parts of the server config.
 - [x] Structure the web server to read the existing config corresponding to each webpage on load, save the .tmp file on save, alert when leaving without applying, and copy to .nix and run a rebuild on reload.
 ## Implementation Details for Current Roadmap
 
 ### v0.1.0-alpha.3 Details
-- [ ] Rebuild nix config files parsing (depends on finalized config structure)
+- [x] Rebuild nix config files parsing (completed with JSON approach)
+- [x] Finalize config structure (nixconfig.json with modular .nix files)
+- [x] Update documentation for new configuration management approach
 - [ ] Determine optimal Immich config storage directory structure
 - [ ] Update backup functionality for new config file locations
-- [ ] Validate documentation accuracy post-refactor
+- [ ] Update Go application to use JSON instead of templates
 
 ### v0.1.0-beta.1 Details
 - [ ] Integrate Immich UI styling for visual consistency (see Frontend & UI section below)

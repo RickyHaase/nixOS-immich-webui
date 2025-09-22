@@ -52,11 +52,18 @@ See `/docs/dev/todo.md` for detailed pending features.
 nixOS-immich-webui/
 ├── main.go                          # Single-file Go application (monolithic)
 ├── go.mod                          # Go module dependencies
-├── internal/templates/             # Embedded templates
-│   ├── nixos/configuration.nix     # NixOS config template
+├── internal/templates/             # Embedded web templates
 │   └── web/                       # HTML templates
 │       ├── index.html             # Main admin interface
 │       └── save.html              # Configuration confirmation page
+├── example/etc/nixos/             # Example NixOS configuration
+│   ├── nixconfig.json             # JSON configuration file
+│   ├── system.nix                 # System configuration module
+│   ├── networking.nix             # Network configuration module
+│   ├── immich.nix                 # Docker/Immich module
+│   ├── remoteaccess.nix           # Tailscale VPN module
+│   ├── zfs.nix                    # ZFS storage module
+│   └── admin.nix                  # User packages module
 ├── docs/                          # Documentation
 │   ├── dev/                       # Development docs
 │   │   ├── todo.md                # TODO items
@@ -145,10 +152,10 @@ The application expects:
 ## Key Components
 
 ### Configuration Management
-- **NixConfig struct**: Defines all modifiable NixOS settings
+- **ConfigVariables struct**: Defines all modifiable NixOS settings in JSON format
 - **ImmichConfig struct**: Manages Immich-specific configuration
-- **Template processing**: Uses Go templates with embedded files
-- **File operations**: Safe config file switching with backups
+- **JSON processing**: Uses standard JSON marshaling/unmarshaling
+- **File operations**: Safe config file switching with `.old` backups
 
 ### Web Interface Routes
 ```go
@@ -176,7 +183,7 @@ POST /reboot        # System reboot
 
 - **Current**: Single monolithic `main.go` file (1013 lines)
 - **Planned**: Refactor into separate modules/packages for maintainability
-- **Templates**: Embedded in binary, but currently parsed at runtime (initialization parsing planned)
+- **Configuration**: JSON-based with `builtins.fromJSON` pattern across modular .nix files
 - **Testing**: Manual testing via web UI and test configs; unit tests planned
 - **Logging**: Structured logging with debug/info/error levels
 
@@ -187,16 +194,18 @@ POST /reboot        # System reboot
 - Test with and without JavaScript enabled
 
 ### Common Development Tasks
-- Add config options: update structs, parsing, templates, web forms, handlers
+- Add config options: update ConfigVariables struct, JSON structure, web forms, handlers
 - Add routes: handler function, mux registration, templates, frontend update
 - Add HTMX features: build HTML first, add HTMX, test fallback
 - Testing: Build, run, test via UI and test configs, verify progressive enhancement
+- Update NixOS modules: add new JSON fields to relevant .nix files using vars.section.setting pattern
 
 
 ## Important Constants and Paths
 
 ```go
 const nixDir string = "test/nixos/"          # Development: test/, Production: "/etc/nixos/"
+const configFile string = "nixconfig.json"    # JSON configuration file
 const immichDir string = "/tank/immich-config/" # Immich docker-compose location
 const tankImmich string = "test/tank/immich/" # Immich config JSON location
 ```
@@ -248,15 +257,24 @@ slog.Debug("functionName()", "param", paramValue)
 slog.Error("| Error description |", "err", err)
 ```
 
-### Template Execution
+### JSON Configuration Handling
 ```go
-tmpl, err := htmltemplate.ParseFS(templates, "internal/templates/web/file.html")
+// Reading current configuration
+var config ConfigVariables
+data, err := os.ReadFile("nixconfig.json")
 if err != nil {
-    slog.Error("| Error rendering template |", "err", err)
-    http.Error(w, err.Error(), http.StatusInternalServerError)
+    slog.Error("| Error reading config |", "err", err)
     return
 }
-tmpl.Execute(w, data)
+json.Unmarshal(data, &config)
+
+// Generating new configuration
+data, err := json.MarshalIndent(config, "", "  ")
+if err != nil {
+    slog.Error("| Error marshaling config |", "err", err)
+    return
+}
+os.WriteFile("nixconfig.json", data, 0644)
 ```
 
 ### HTMX Response Patterns
@@ -274,7 +292,7 @@ http.Redirect(w, r, "/", http.StatusSeeOther)
 
 ### Core System
 - Auto-rollback if `nixos-rebuild` fails (timeout and manual rollback)
-- Parse templates at initialization (not runtime)
+- JSON configuration management (completed)
 - Re-organize code into multiple files/modules
 - Add unit tests
 - Internal backup failsafe (backup server config to data disk, photos to boot disk)

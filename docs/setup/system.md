@@ -45,3 +45,54 @@ ping google.com
 2. **Complete Configuration**: Follow the [Deployment Guide](deployment.md) for full system setup
 
 The deployment guide will walk you through copying and configuring the modular NixOS configuration files that enable the WebUI to manage your system.
+
+## Configuration Management
+
+The system uses a JSON-based configuration approach for maximum reliability and ease of management.
+
+### Core Configuration Files
+
+- **`nixconfig.json`**: Contains all user-configurable settings in structured JSON format
+- **Modular .nix files**: System configuration modules that read from the JSON file
+- **`configuration.nix`**: Main configuration file that imports the modules
+
+### Configuration Architecture
+
+Each configuration module follows the same pattern:
+
+```nix
+{ config, pkgs, ... }:
+let
+  vars = builtins.fromJSON (builtins.readFile ./nixconfig.json);
+in
+{
+  # Configuration using vars.section.setting
+}
+```
+
+### JSON Configuration Structure
+
+```json
+{
+  "system": {
+    "timeZone": "America/New_York",
+    "autoUpgrade": false,
+    "upgradeTime": "02:00",
+    "upgradeLower": "02:30",
+    "upgradeUpper": "03:00"
+  },
+  "remoteAccess": {
+    "tailscale": {
+      "enable": false,
+      "authKey": "tskey-auth-placeholder"
+    }
+  }
+}
+```
+
+### Benefits
+
+- **Reliable parsing**: Uses NixOS native `builtins.fromJSON` instead of regex
+- **Simple generation**: Direct JSON marshaling in Go
+- **Easy rollback**: Simple `.old` file backup strategy
+- **Consistent pattern**: Same approach across all modules
