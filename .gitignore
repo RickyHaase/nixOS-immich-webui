@@ -33,6 +33,7 @@
 
 !test/nixos/configuration.nix
 !test/tank/immich/immich-config.json
+!test/nixos/nixconfig.json
 
 !example/etc/nixos/*
 !example/tank/immich-config/*

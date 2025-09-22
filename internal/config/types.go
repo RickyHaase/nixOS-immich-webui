@@ -1,6 +1,25 @@
 package config
 
+// ConfigVariables represents the JSON configuration structure that matches nixconfig.json
+// Contains only the fields that were originally in the Go template for NixOS configuration
+type ConfigVariables struct {
+	System struct {
+		TimeZone     string `json:"timeZone"`
+		AutoUpgrade  bool   `json:"autoUpgrade"`
+		UpgradeTime  string `json:"upgradeTime"`
+		UpgradeLower string `json:"upgradeLower"`
+		UpgradeUpper string `json:"upgradeUpper"`
+	} `json:"system"`
+	RemoteAccess struct {
+		Tailscale struct {
+			Enable  bool   `json:"enable"`
+			AuthKey string `json:"authKey"`
+		} `json:"tailscale"`
+	} `json:"remoteAccess"`
+}
+
 // NixConfig contains all NixOS config settings that will be modifiable via this interface
+// DEPRECATED: Use ConfigVariables instead. Kept for backward compatibility during migration.
 type NixConfig struct {
 	TimeZone     string
 	AutoUpgrade  bool   // also applies to allowReboot
@@ -11,6 +30,43 @@ type NixConfig struct {
 	TSAuthkey    string
 	Email        string
 	EmailPass    bool
+}
+
+// ToConfigVariables converts old NixConfig to new ConfigVariables structure
+func (nc *NixConfig) ToConfigVariables() *ConfigVariables {
+	cv := &ConfigVariables{}
+	cv.System.TimeZone = nc.TimeZone
+	cv.System.AutoUpgrade = nc.AutoUpgrade
+	cv.System.UpgradeTime = nc.UpgradeTime
+	cv.System.UpgradeLower = nc.UpgradeLower
+	cv.System.UpgradeUpper = nc.UpgradeUpper
+	cv.RemoteAccess.Tailscale.Enable = nc.Tailscale
+	cv.RemoteAccess.Tailscale.AuthKey = nc.TSAuthkey
+	// Email fields removed - they are managed separately via /email endpoint
+	return cv
+}
+
+// ToNixConfig converts new ConfigVariables to old NixConfig structure for compatibility
+func (cv *ConfigVariables) ToNixConfig() *NixConfig {
+	nixConfig := &NixConfig{
+		TimeZone:     cv.System.TimeZone,
+		AutoUpgrade:  cv.System.AutoUpgrade,
+		UpgradeTime:  cv.System.UpgradeTime,
+		UpgradeLower: cv.System.UpgradeLower,
+		UpgradeUpper: cv.System.UpgradeUpper,
+		Tailscale:    cv.RemoteAccess.Tailscale.Enable,
+		TSAuthkey:    cv.RemoteAccess.Tailscale.AuthKey,
+		Email:        "",
+		EmailPass:    false,
+	}
+	
+	// Email fields are managed separately - get them from immich-config.json if needed
+	if immich, err := GetImmichConfig(); err == nil {
+		nixConfig.Email = immich.Notifications.SMTP.Transport.Username
+		nixConfig.EmailPass = immich.Notifications.SMTP.Transport.Password != ""
+	}
+	
+	return nixConfig
 }
 
 // ImmichConfig represents the Immich configuration JSON structure

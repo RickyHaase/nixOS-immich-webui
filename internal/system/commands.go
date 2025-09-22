@@ -10,7 +10,31 @@ import (
 	"github.com/RickyHaase/nixOS-immich-webui/internal/config"
 )
 
+// SwitchConfigJSON backs up current JSON config and replaces with temp config
+func SwitchConfigJSON() error {
+	slog.Debug("SwitchConfigJSON()")
+	configPath := config.NixDir + config.ConfigFile
+	backupPath := config.NixDir + config.ConfigFile + ".old"
+	tmpPath := config.NixDir + config.ConfigFile + ".tmp"
+
+	slog.Info("Backing up nixconfig.json to nixconfig.json.old...")
+	if err := config.CopyFile(configPath, backupPath); err != nil {
+		slog.Debug("Error backing up JSON config file", "err", err)
+		return err
+	}
+
+	slog.Info("Replacing nixconfig.json with nixconfig.json.tmp...")
+	if err := config.CopyFile(tmpPath, configPath); err != nil {
+		slog.Debug("Error replacing JSON config file", "err", err)
+		return err
+	}
+
+	slog.Info("JSON configuration file switch complete.")
+	return nil
+}
+
 // SwitchConfig backs up current config and replaces with temp config
+// DEPRECATED: Use SwitchConfigJSON() instead. Kept for backward compatibility.
 func SwitchConfig() error {
 	slog.Debug("switchConfig()")
 	configPath := config.NixDir + "configuration.nix"
