@@ -8,13 +8,13 @@
   },
   "notifications": {
     "smtp": {
-      "enabled": true,
+      "enabled": false,
       "from": "Immich Server \u003cexample@gmail.com\u003e",
       "replyTo": "",
       "transport": {
         "host": "smtp.gmail.com",
         "ignoreCert": false,
-        "password": "examplepassword",
+        "password": "",
         "port": 587,
         "username": "example@gmail.com"
       }

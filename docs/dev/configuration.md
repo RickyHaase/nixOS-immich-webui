@@ -34,7 +34,7 @@ The `nixconfig.json` file contains all user-configurable settings in a structure
     "timeZone": "America/New_York",
     "autoUpgrade": false,
     "upgradeTime": "02:00",
-    "upgradeLower": "02:30", 
+    "upgradeLower": "02:30",
     "upgradeUpper": "03:00"
   },
   "remoteAccess": {
@@ -74,13 +74,13 @@ The `nixconfig.json` file contains all user-configurable settings in a structure
 
 ```
 /etc/nixos/
-├── nixconfig.json      # All user-configurable settings
+├── nixconfig.json      # All user-configurable settings (must backup)
 ├── system.nix          # System configuration (timezone, auto-upgrade)
-├── remoteaccess.nix    # Tailscale VPN configuration  
+├── remoteaccess.nix    # Tailscale VPN configuration
 ├── networking.nix      # Network and proxy configuration
 ├── immich.nix          # Docker and Immich service configuration
 ├── zfs.nix            # ZFS storage configuration
-├── admin.nix          # User-managed packages (backup only)
+├── admin.nix          # User-managed packages (include in backups)
 └── configuration.nix   # Main imports and base configuration
 ```
 
@@ -119,7 +119,7 @@ func LoadCurrentConfig() (*ConfigVariables, error) {
     if err != nil {
         return nil, err
     }
-    
+
     var config ConfigVariables
     err = json.Unmarshal(data, &config)
     return &config, err
@@ -132,13 +132,13 @@ func LoadCurrentConfig() (*ConfigVariables, error) {
 func SaveConfig(config *ConfigVariables) error {
     // Create backup
     createBackup("nixconfig.json")
-    
+
     // Generate JSON
     data, err := json.MarshalIndent(config, "", "  ")
     if err != nil {
         return err
     }
-    
+
     // Write new configuration
     return os.WriteFile("nixconfig.json", data, 0644)
 }
@@ -161,7 +161,7 @@ nixconfig.json.old → nixconfig.json
 The JSON approach integrates seamlessly with existing functions:
 
 - `switchConfig()` - Works unchanged with JSON files
-- `applyChanges()` - Works unchanged with JSON files  
+- `applyChanges()` - Works unchanged with JSON files
 - `CopyFile()` - Works unchanged for backup operations
 
 ## Comparison with Previous Approach
@@ -181,7 +181,7 @@ The JSON approach integrates seamlessly with existing functions:
 ### Adding New Configuration Options
 
 1. **Update JSON structure** in `nixconfig.json`
-2. **Update Go struct** to match JSON structure  
+2. **Update Go struct** to match JSON structure
 3. **Update relevant .nix module** to use new JSON field
 4. **Update web form** to collect new setting
 5. **Test configuration** with existing workflow
@@ -199,6 +199,6 @@ The current implementation focuses on the essential configuration variables extr
 
 The modular approach allows for:
 - Easy addition of new configuration sections
-- Individual module enable/disable functionality  
+- Individual module enable/disable functionality
 - Clear separation between static and dynamic configuration
 - Maintained backward compatibility with existing deployment processes
