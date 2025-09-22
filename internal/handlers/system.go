@@ -5,8 +5,6 @@ import (
 	htmltemplate "html/template"
 	"log/slog"
 	"net/http"
-	"os"
-	texttemplate "text/template" // Still needed for backward compatibility
 
 	"github.com/RickyHaase/nixOS-immich-webui/internal/config"
 	"github.com/RickyHaase/nixOS-immich-webui/internal/system"
@@ -134,28 +132,3 @@ func (h *SystemHandler) HandleReboot(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// saveTmpFile saves configuration to temporary file
-// DEPRECATED: JSON configuration is now saved directly in SaveConfigJSON()
-func (h *SystemHandler) saveTmpFile(cfg *config.NixConfig) error {
-	slog.Debug("saveTmpFile() - DEPRECATED")
-	tmpl, err := texttemplate.ParseFS(h.templates, "nixos/configuration.nix")
-	if err != nil {
-		slog.Debug("| Error rendering template |", "err", err)
-		return err
-	}
-
-	outFile, err := os.Create(config.NixDir + "configuration.tmp")
-	if err != nil {
-		slog.Debug("| Error creating .tmp file |", "err", err)
-		return err
-	}
-	defer outFile.Close()
-
-	err = tmpl.Execute(outFile, cfg)
-	if err != nil {
-		slog.Debug("| Error writing .tmp file |", "err", err)
-		return err
-	}
-
-	return nil
-}

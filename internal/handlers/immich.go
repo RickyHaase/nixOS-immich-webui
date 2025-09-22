@@ -90,22 +90,21 @@ func (h *ImmichHandler) HandleEmailPost(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Parse settings out of immich-config.json - might need to refactor these 15 lines out into a function to maintain DRY best practice
-	cfg := config.NixConfig{}
+	// Get email settings directly from immich-config.json
 	immich, err := config.GetImmichConfig()
 	if err != nil {
-		slog.Error("| Error parisng immich-config.json |", "err", err)
+		slog.Error("| Error parsing immich-config.json |", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	cfg.Email = immich.Notifications.SMTP.Transport.Username
-	if immich.Notifications.SMTP.Transport.Password != "" {
-		slog.Debug("Contains Password = True")
-		cfg.EmailPass = true
-	} else {
-		slog.Debug("Contains Password = False")
-		cfg.EmailPass = false
+	// Create simple struct for template data
+	emailData := struct {
+		Email     string
+		EmailPass bool
+	}{
+		Email:     immich.Notifications.SMTP.Transport.Username,
+		EmailPass: immich.Notifications.SMTP.Transport.Password != "",
 	}
 
 	htmlStr := `    <form id="email-form" action="/email" method="post">
@@ -117,5 +116,5 @@ func (h *ImmichHandler) HandleEmailPost(w http.ResponseWriter, r *http.Request) 
     </form>`
 
 	tmpl, _ := htmltemplate.New("t").Parse(htmlStr)
-	tmpl.Execute(w, cfg)
+	tmpl.Execute(w, emailData)
 }

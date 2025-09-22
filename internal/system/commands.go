@@ -33,29 +33,6 @@ func SwitchConfigJSON() error {
 	return nil
 }
 
-// SwitchConfig backs up current config and replaces with temp config
-// DEPRECATED: Use SwitchConfigJSON() instead. Kept for backward compatibility.
-func SwitchConfig() error {
-	slog.Debug("switchConfig()")
-	configPath := config.NixDir + "configuration.nix"
-	backupPath := config.NixDir + "configuration.old"
-	tmpPath := config.NixDir + "configuration.tmp"
-
-	slog.Info("Backing up configuration.nix to configuration.old...")
-	if err := config.CopyFile(configPath, backupPath); err != nil {
-		slog.Debug("Error backing up config file", "err", err)
-		return err
-	}
-
-	slog.Info("Replacing configuration.nix with configuration.tmp...")
-	if err := config.CopyFile(tmpPath, configPath); err != nil {
-		slog.Debug("Error replacing config file", "err", err)
-		return err
-	}
-
-	slog.Info("Configuration file swtich complete.")
-	return nil
-}
 
 // ApplyChanges runs nixos-rebuild switch to apply configuration changes
 func ApplyChanges() error {

@@ -31,7 +31,7 @@
 !internal/templates/nixos/configuration.nix
 #!internal/templates/immich/immich-config.json
 
-!test/nixos/configuration.nix
+#!test/nixos/configuration.nix
 !test/tank/immich/immich-config.json
 !test/nixos/nixconfig.json
 

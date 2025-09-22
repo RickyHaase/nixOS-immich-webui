@@ -18,8 +18,8 @@ type ConfigVariables struct {
 	} `json:"remoteAccess"`
 }
 
-// NixConfig contains all NixOS config settings that will be modifiable via this interface
-// DEPRECATED: Use ConfigVariables instead. Kept for backward compatibility during migration.
+// NixConfig contains all NixOS config settings for template compatibility
+// Used only for HTML template rendering where the old structure is expected
 type NixConfig struct {
 	TimeZone     string
 	AutoUpgrade  bool   // also applies to allowReboot
@@ -32,21 +32,7 @@ type NixConfig struct {
 	EmailPass    bool
 }
 
-// ToConfigVariables converts old NixConfig to new ConfigVariables structure
-func (nc *NixConfig) ToConfigVariables() *ConfigVariables {
-	cv := &ConfigVariables{}
-	cv.System.TimeZone = nc.TimeZone
-	cv.System.AutoUpgrade = nc.AutoUpgrade
-	cv.System.UpgradeTime = nc.UpgradeTime
-	cv.System.UpgradeLower = nc.UpgradeLower
-	cv.System.UpgradeUpper = nc.UpgradeUpper
-	cv.RemoteAccess.Tailscale.Enable = nc.Tailscale
-	cv.RemoteAccess.Tailscale.AuthKey = nc.TSAuthkey
-	// Email fields removed - they are managed separately via /email endpoint
-	return cv
-}
-
-// ToNixConfig converts new ConfigVariables to old NixConfig structure for compatibility
+// ToNixConfig converts ConfigVariables to NixConfig structure for template compatibility
 func (cv *ConfigVariables) ToNixConfig() *NixConfig {
 	nixConfig := &NixConfig{
 		TimeZone:     cv.System.TimeZone,
@@ -60,7 +46,7 @@ func (cv *ConfigVariables) ToNixConfig() *NixConfig {
 		EmailPass:    false,
 	}
 	
-	// Email fields are managed separately - get them from immich-config.json if needed
+	// Email fields are managed separately - get them from immich-config.json for template compatibility
 	if immich, err := GetImmichConfig(); err == nil {
 		nixConfig.Email = immich.Notifications.SMTP.Transport.Username
 		nixConfig.EmailPass = immich.Notifications.SMTP.Transport.Password != ""

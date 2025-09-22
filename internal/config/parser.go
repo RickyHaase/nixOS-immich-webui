@@ -6,7 +6,6 @@ import (
 	"io"
 	"log/slog"
 	"os"
-	"regexp"
 	"strconv"
 	"time"
 )
@@ -18,41 +17,6 @@ const (
 	TankImmich  string = "test/tank/immich/"     // really only for immich-config.json. Not certain where this will end up in the end
 )
 
-// Helper function to parse boolean values from the configuration file
-func parseBooleanSetting(fileContent []byte, setting string) (bool, error) {
-	slog.Debug("parseBooleanSetting", "setting", setting)
-	re := regexp.MustCompile(fmt.Sprintf(`(?m)^\s*%s\s*=\s*(true|false)\s*;`, setting))
-	match := re.FindSubmatch(fileContent)
-	if match == nil {
-		slog.Debug("No Match Found", "setting", setting)
-		return false, fmt.Errorf("%s not found", setting)
-	}
-	return string(match[1]) == "true", nil
-}
-
-// Helper function to parse string values from the configuration file
-func parseStringSetting(fileContent []byte, setting string) (string, error) {
-	slog.Debug("parseStringSetting", "setting", setting)
-	re := regexp.MustCompile(fmt.Sprintf(`(?m)^\s*%s\s*=\s*"(.*?)"\s*;`, setting))
-	match := re.FindSubmatch(fileContent)
-	if match == nil {
-		slog.Debug("No Match Found", "setting", setting)
-		return "", fmt.Errorf("%s not found", setting)
-	}
-	return string(match[1]), nil
-}
-
-// Helper function to parse Tailscale auth key from configuration file
-func parseAuthKeySetting(fileContent []byte) (string, error) {
-	slog.Debug("parseAuthKeySetting()")
-	re := regexp.MustCompile(`\btskey-auth-[a-zA-Z0-9]+-[a-zA-Z0-9]+\b`)
-	match := re.Find(fileContent)
-	if match == nil {
-		slog.Debug("No Match Found for authkey")
-		return "", fmt.Errorf("tskey-auth not found")
-	}
-	return string(match), nil
-}
 
 // ParseBool converts string to boolean with error handling
 func ParseBool(value string) bool {
@@ -107,69 +71,6 @@ func LoadCurrentConfigJSON() (*ConfigVariables, error) {
 	return &config, nil
 }
 
-// LoadCurrentConfig reads and parses the current NixOS configuration
-// DEPRECATED: Use LoadCurrentConfigJSON() instead. Kept for backward compatibility.
-func LoadCurrentConfig() (*NixConfig, error) {
-	slog.Debug("loadCurrentConfig()")
-	file, err := os.ReadFile(NixDir + "configuration.nix")
-	if err != nil {
-		slog.Debug("Error opening file:", "err", err)
-		return nil, err
-	}
-
-	config := NixConfig{}
-
-	// Parse the relevant values out of the settings in the config file
-	config.TimeZone, err = parseStringSetting(file, "time.timeZone")
-	if err != nil {
-		slog.Debug("Error parsing TimeZone:", "err", err)
-		return nil, err
-	}
-
-	config.AutoUpgrade, err = parseBooleanSetting(file, "system.autoUpgrade.enable")
-	if err != nil {
-		slog.Debug("Error parsing AutoUpgrade Enable:", "err", err)
-		return nil, err
-	}
-
-	config.UpgradeTime, err = parseStringSetting(file, "system.autoUpgrade.dates")
-	if err != nil {
-		slog.Debug("Error parsing UpdgradeTime:", "err", err)
-		return nil, err
-	}
-
-	config.Tailscale, err = parseBooleanSetting(file, "services.tailscale.enable")
-	if err != nil {
-		slog.Debug("Error parsing Tailscale Enable", "err", err)
-		return nil, err
-	}
-
-	config.TSAuthkey, err = parseAuthKeySetting(file)
-	if err != nil {
-		slog.Debug("Error parsing Tailscale AuthKey", "err", err)
-		return nil, err
-	}
-
-	// Parse settings out of immich-config.json
-	immich, err := GetImmichConfig()
-	if err != nil {
-		slog.Debug("Error parsing Immich Config", "err", err)
-		return nil, err
-	}
-
-	config.Email = immich.Notifications.SMTP.Transport.Username
-
-	if immich.Notifications.SMTP.Transport.Password != "" {
-		slog.Debug("IF was met")
-		config.EmailPass = true
-	} else {
-		slog.Debug("ELSE was met")
-		config.EmailPass = false
-	}
-	slog.Debug("Password Boolean", "EmailPass", config.EmailPass)
-
-	return &config, nil
-}
 
 // GetImmichConfig reads and parses the Immich configuration JSON file
 func GetImmichConfig() (*ImmichConfig, error) {
