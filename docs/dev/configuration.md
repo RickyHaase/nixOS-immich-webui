@@ -171,9 +171,7 @@ The JSON approach integrates seamlessly with existing functions:
 | **Parsing** | Regex patterns (brittle) | JSON unmarshaling (reliable) |
 | **Generation** | Template execution | JSON marshaling |
 | **Interface** | Template variables scattered | Structured JSON file |
-| **Backup** | Multiple template files | Single JSON file |
-| **Rollback** | Complex template restoration | Simple JSON file copy |
-| **Debugging** | Template syntax errors | Standard JSON validation |
+| **Backup** | Monolithic .nix file | Single JSON file |
 | **Maintenance** | Template + Go struct sync | Single source of truth |
 
 ## Development Workflow
