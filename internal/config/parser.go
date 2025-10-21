@@ -130,6 +130,50 @@ func SetImmichConfig(email string, password string) error {
 	return CopyFile(fileName, configFile)
 }
 
+// SetMLModel updates the Immich machine learning CLIP model
+func SetMLModel(modelName string) error {
+	slog.Debug("setMLModel()", "modelName", modelName)
+
+	// Validate model name - only allow specific models
+	validModels := map[string]bool{
+		"ViT-B-32__openai":                true,
+		"ViT-B-16-SigLIP__webli":          true,
+		"ViT-SO400M-14-SigLIP-384__webli": true,
+	}
+
+	if !validModels[modelName] {
+		slog.Error("| Invalid ML model name |", "modelName", modelName)
+		return fmt.Errorf("invalid model name: %s", modelName)
+	}
+
+	immichConfig, err := GetImmichConfig()
+	if err != nil {
+		slog.Debug("Error reading immich config file", "err", err)
+		return err
+	}
+
+	immichConfig.MachineLearning.Clip.ModelName = modelName
+
+	b, err := json.MarshalIndent(immichConfig, "", "  ")
+	if err != nil {
+		slog.Debug("Error generating JSON", "err", err)
+		return err
+	}
+
+	slog.Debug(string(b))
+
+	fileName := TankImmich + "immich-config.tmp"
+
+	if err := os.WriteFile(fileName, b, 0644); err != nil {
+		slog.Debug("Error writing to file:", "err", err)
+		return err
+	}
+
+	configFile := TankImmich + "immich-config.json"
+
+	return CopyFile(fileName, configFile)
+}
+
 // SaveConfigJSON writes ConfigVariables to JSON file with .tmp extension
 func SaveConfigJSON(cfg *ConfigVariables) error {
 	slog.Debug("SaveConfigJSON()")

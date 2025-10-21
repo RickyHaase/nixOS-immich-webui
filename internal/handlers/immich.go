@@ -118,3 +118,65 @@ func (h *ImmichHandler) HandleEmailPost(w http.ResponseWriter, r *http.Request) 
 	tmpl, _ := htmltemplate.New("t").Parse(htmlStr)
 	tmpl.Execute(w, emailData)
 }
+
+// HandleMLModelPost processes machine learning model configuration updates
+func (h *ImmichHandler) HandleMLModelPost(w http.ResponseWriter, r *http.Request) {
+	slog.Info("Received ML Model Post")
+
+	err := r.ParseForm()
+	if err != nil {
+		slog.Error("| Error parsing ML model form submission |", "err", err)
+		http.Error(w, "Failed to parse form data", http.StatusBadRequest)
+		return
+	}
+
+	modelName := r.FormValue("ml-model")
+
+	// Validate model name before processing
+	validModels := map[string]bool{
+		"ViT-B-32__openai":                true,
+		"ViT-B-16-SigLIP__webli":          true,
+		"ViT-SO400M-14-SigLIP-384__webli": true,
+	}
+
+	if !validModels[modelName] {
+		slog.Error("| Invalid ML model submitted |", "modelName", modelName)
+		http.Error(w, "Invalid model selection.", http.StatusBadRequest)
+		return
+	}
+
+	if err := config.SetMLModel(modelName); err != nil {
+		slog.Error("| Failed to set ML model |", "err", err)
+		http.Error(w, "Failed to set ML model.", http.StatusInternalServerError)
+		return
+	}
+
+	// Get current model from immich-config.json
+	immich, err := config.GetImmichConfig()
+	if err != nil {
+		slog.Error("| Error parsing immich-config.json |", "err", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Create struct for template data
+	mlData := struct {
+		ModelName string
+	}{
+		ModelName: immich.MachineLearning.Clip.ModelName,
+	}
+
+	htmlStr := `    <form id="ml-form" action="/mlmodel" method="post">
+        <label for="ml-model">CLIP Model:</label>
+        <select name="ml-model" id="ml-model">
+            <option value="ViT-B-32__openai" {{if eq .ModelName "ViT-B-32__openai"}}selected{{end}}>Default (ViT-B-32__openai)</option>
+            <option value="ViT-B-16-SigLIP__webli" {{if eq .ModelName "ViT-B-16-SigLIP__webli"}}selected{{end}}>Improved (ViT-B-16-SigLIP__webli)</option>
+            <option value="ViT-SO400M-14-SigLIP-384__webli" {{if eq .ModelName "ViT-SO400M-14-SigLIP-384__webli"}}selected{{end}}>Beefy (ViT-SO400M-14-SigLIP-384__webli)</option>
+        </select>
+        <button type="submit" hx-post="/mlmodel" hx-target="#ml-form">Submit</button>
+        <br><small>Select the machine learning model for image recognition. Higher quality models require more resources.</small>
+    </form>`
+
+	tmpl, _ := htmltemplate.New("t").Parse(htmlStr)
+	tmpl.Execute(w, mlData)
+}

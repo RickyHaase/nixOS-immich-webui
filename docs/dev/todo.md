@@ -47,6 +47,8 @@ Items marked with checkboxes indicate completion status.
 - [ ] Auto-rollback if nixos-rebuild fails
 
 ### Research/Investigation Needed
+  - [ ] Configure Hardware Acceleration ML & Transcoding (requires compose change & immich config changes)
+  - [ ] Centralized configuration schema (externally there is nix config, immich config, immich env, etc. Can this be distilled into one config for backup/restore?)
 
 #### Core System
 - [ ] Auto-rollback implementation strategy

@@ -33,7 +33,6 @@ func SwitchConfigJSON() error {
 	return nil
 }
 
-
 // ApplyChanges runs nixos-rebuild switch to apply configuration changes
 func ApplyChanges() error {
 	slog.Debug("applyChanges()")
@@ -69,7 +68,7 @@ func GetStatus() string {
 		return "Stopped"
 	default:
 		slog.Error("| Unexpected status of immich-app.service |", "err", err)
-		return "Error getting status"
+		return "Unknown state"
 	}
 }
 

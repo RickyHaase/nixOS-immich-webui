@@ -33,6 +33,7 @@ Have a "functional" web UI that can display the currently applied NixOS config (
 - [ ] v0.1.0-aplha.4
   - [ ] Add unit tests
   - [ ] Add GitHub binary releases
+  - [ ] Add systemctl service for running the nixmich binary
 - [ ] v0.1.0-beta.1
   - [ ] Update repo name and binary name (needs a better name and a better way to reference project/binary in documentation) <!--- nixmich: easy and relable photo storage applicance made with nixos and immich -->
   - [ ] Get some CSS ([immich-ui](https://ui.immich.app)) and make a usable mobile-first UI <!--- (logo assets; [nix logo](https://github.com/NixOS/nixos-artwork/tree/master/logo) + [immich colors](https://ui.immich.app/components/logo?)-->

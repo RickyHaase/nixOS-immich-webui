@@ -30,6 +30,7 @@ type NixConfig struct {
 	TSAuthkey    string
 	Email        string
 	EmailPass    bool
+	MLModel      string
 }
 
 // ToNixConfig converts ConfigVariables to NixConfig structure for template compatibility
@@ -45,13 +46,14 @@ func (cv *ConfigVariables) ToNixConfig() *NixConfig {
 		Email:        "",
 		EmailPass:    false,
 	}
-	
-	// Email fields are managed separately - get them from immich-config.json for template compatibility
+
+	// Email fields and ML model are managed separately - get them from immich-config.json for template compatibility
 	if immich, err := GetImmichConfig(); err == nil {
 		nixConfig.Email = immich.Notifications.SMTP.Transport.Username
 		nixConfig.EmailPass = immich.Notifications.SMTP.Transport.Password != ""
+		nixConfig.MLModel = immich.MachineLearning.Clip.ModelName
 	}
-	
+
 	return nixConfig
 }
 
@@ -61,6 +63,7 @@ type ImmichConfig struct {
 	Notifications   Notifications   `json:"notifications"`
 	Server          Server          `json:"server"`
 	StorageTemplate StorageTemplate `json:"storageTemplate"`
+	MachineLearning MachineLearning `json:"machineLearning"`
 }
 
 // Backup configuration for Immich
@@ -109,6 +112,17 @@ type StorageTemplate struct {
 	Enabled                 bool   `json:"enabled"`
 	HashVerificationEnabled bool   `json:"hashVerificationEnabled"`
 	Template                string `json:"template"`
+}
+
+type MachineLearning struct {
+	Enabled bool     `json:"enabled"`
+	URLs    []string `json:"urls"`
+	Clip    Clip     `json:"clip"`
+}
+
+type Clip struct {
+	Enabled   bool   `json:"enabled"`
+	ModelName string `json:"modelName"`
 }
 
 // BlockDevice represents a storage device from lsblk output
