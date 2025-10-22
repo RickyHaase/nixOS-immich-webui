@@ -14,10 +14,10 @@
 
 ### Current Status & Roadmap
 
-- **Version**: Alpha development (v0.1.0-alpha.2 completed)
+- **Version**: Alpha development (v0.1.0-alpha.3 in progress)
 - **Stage**: Active development, not production-ready
 - **Main Branch**: `main`
-- **Current Branch**: `claude-vibe`
+- **Current Branch**: `v0.1.0-alpha.3/backups`
 
 #### Roadmap
 
@@ -33,10 +33,16 @@
   - Logging levels (Info, Error, Debug)
   - Basic USB backup (photos, config, DB dump)
 
-- **v0.1.0-alpha.3** (Pending)
-  - Documentation and config files for setup
-  - Refactor monolithic main.go into modules/packages
-  - Improved error handling and rollback
+- **v0.1.0-alpha.3** (In Progress - ~90% Complete)
+  - ✅ JSON-based configuration management (replaces .nix template parsing)
+  - ✅ Refactored modular architecture with clean package separation
+  - ✅ Automatic rollback on nixos-rebuild failure
+  - ✅ Input validation framework (timezone, time, email, Tailscale keys)
+  - ✅ Concurrency safety with mutex protection
+  - ✅ ML model selection support for Immich
+  - ✅ Build tag system (dev/prod modes)
+  - ⏳ Documentation updates for new features
+  - ⏳ Backup system updates for new config locations
 
 - **v0.1.0-beta.1** (Planned)
   - Mobile-first CSS/UI
@@ -55,7 +61,10 @@ nixOS-immich-webui/
 ├── internal/                       # Modular packages
 │   ├── config/                     # Configuration management
 │   │   ├── types.go               # ConfigVariables & data structures
-│   │   └── parser.go              # JSON parsing & file operations
+│   │   ├── parser.go              # JSON parsing & file operations
+│   │   ├── validation.go          # Input validation functions
+│   │   ├── paths_dev.go           # Development build paths
+│   │   └── paths_prod.go          # Production build paths
 │   ├── handlers/                   # HTTP request handlers
 │   │   ├── system.go              # System configuration endpoints
 │   │   ├── immich.go              # Immich service management
@@ -69,8 +78,14 @@ nixOS-immich-webui/
 │       └── web/                   # HTML templates
 │           ├── index.html         # Main admin interface
 │           ├── save.html          # Configuration confirmation page
+│           ├── email_form.html    # Email configuration form fragment
+│           ├── ml_form.html       # ML model selection form fragment
 │           ├── backup_config.html # Backup configuration
-│           └── backup_dashboard.html # Backup status dashboard
+│           ├── backup_dashboard.html # Backup status dashboard
+│           ├── backup_form.html   # Backup form fragment
+│           ├── backup_status.html # Backup status fragment
+│           ├── disk_options.html  # Disk selection options fragment
+│           └── no_disks.html      # No eligible disks message fragment
 ├── example/etc/nixos/             # Example NixOS configuration
 │   ├── nixconfig.json             # JSON configuration file
 │   ├── system.nix                 # System configuration module
@@ -93,8 +108,7 @@ nixOS-immich-webui/
 │       └── remote-access.md       # Remote access setup
 └── test/                          # Test configurations
     └── nixos/                     # Test NixOS configs
-        ├── nixconfig.json         # Test JSON configuration
-        └── configuration.nix      # Legacy test config
+        └── nixconfig.json         # Test JSON configuration
 ```
 
 ## Technology Stack
@@ -102,9 +116,11 @@ nixOS-immich-webui/
 ### Backend
 - **Language**: Go 1.23.3
 - **HTTP Server**: Standard library `net/http`
-- **Templating**: `html/template` and `text/template`
+- **Templating**: `html/template` (text/template removed in alpha.3)
 - **File Embedding**: `embed` package for templates
 - **Logging**: `log/slog` for structured logging
+- **Concurrency**: Package-level mutexes for thread-safe config operations
+- **Validation**: Custom validation framework for user inputs
 
 ### Frontend - Progressive Enhancement Strategy
 - **Base Layer**: Semantic HTML forms with full functionality without JavaScript
@@ -144,16 +160,40 @@ Example from `index.html`:
 
 ## Build and Development
 
-### Building
+### Build Modes
+
+The application supports two build modes controlled by Go build tags:
+
+#### Development Build (uses test/ directories)
 ```bash
+go run -tags dev .
+# OR
+go build -tags dev -o nixos-immich-webui .
+```
+
+Paths used in dev mode:
+- NixOS config: `test/nixos/`
+- Immich config: `test/tank/immich-config/`
+- Immich data: `test/tank/immich/`
+
+#### Production Build (uses system paths)
+```bash
+go run .
+# OR
 go build -o nixos-immich-webui .
 ```
 
-### Running (Development)
+Paths used in production mode:
+- NixOS config: `/etc/nixos/`
+- Immich config: `/tank/immich-config/`
+- Immich data: `/tank/immich/`
+
+### Runtime Flags
 ```bash
-./nixos-immich-webui
-# Server starts at http://localhost:8000
+./nixos-immich-webui --debug    # Enable debug logging
 ```
+
+Server starts at http://localhost:8000 in both modes.
 
 ### Environment Setup
 The application expects:
@@ -161,20 +201,21 @@ The application expects:
 2. Binary placed in `/root/`
 3. Immich docker-compose setup in `/tank/immich-config/`
 4. Tank datasets: `tank/pgdata` and `tank/immich`
-
-### Development Mode
-- File paths are currently set to `test/` directory for safety
-- Templates are embedded in binary using `//go:embed`
-- Debug logging can be enabled by uncommenting `slog.SetLogLoggerLevel(slog.LevelDebug)`
+5. nixconfig.json in `/etc/nixos/` (see example in `example/etc/nixos/`)
 
 ## Key Components
 
 ### Configuration Management
 - **config package**: Centralized configuration management with JSON-based approach
   - **ConfigVariables struct**: Defines all modifiable NixOS settings in JSON format
-  - **ImmichConfig struct**: Manages Immich-specific configuration
+  - **ImmichConfig struct**: Manages Immich-specific configuration including ML models
   - **JSON processing**: Uses standard JSON marshaling/unmarshaling with `builtins.fromJSON`
-  - **File operations**: Safe config file switching with `.old` backups
+  - **File operations**: Atomic config file switching with `.old` backups using os.Rename
+  - **Concurrency safety**: Package-level mutexes (`nixConfigMu`, `immichConfigMu`)
+  - **Input validation**: Comprehensive validation for timezone, time, email, Tailscale keys
+  - **Automatic rollback**: RollbackConfigJSON() restores .old backup on nixos-rebuild failure
+  - **ML model management**: Centralized ValidMLModels map with validation helpers
+  - **Build-specific paths**: Separate dev/prod paths using Go build tags
 - **handlers package**: HTTP endpoint handling with clean separation of concerns
 - **services package**: Business logic services for complex operations
 - **system package**: Low-level system command operations
@@ -197,6 +238,7 @@ POST /start         # Start Immich service (HandleStart)
 POST /stop          # Stop Immich service (HandleStop)
 POST /update        # Update Immich containers (HandleUpdate)
 POST /email         # Configure email settings (HandleEmailPost)
+POST /mlmodel       # Configure ML model selection (HandleMLModelPost)
 ```
 
 #### BackupHandler Routes
@@ -209,24 +251,57 @@ GET  /backupstatus  # Backup operation status (HandleGetBackupStatus)
 ### Package Architecture
 
 #### config package
-- **Configuration management**: `LoadCurrentConfigJSON()`, `SaveConfigJSON()`
+- **Configuration management**:
+  - `LoadCurrentConfigJSON()` - Thread-safe JSON config loading
+  - `SaveConfigJSON()` - Save config to .tmp file
+  - `SwitchConfigJSON()` - Atomic switch with .old backup (uses os.Rename)
+  - `RollbackConfigJSON()` - Restore from .old backup on failure
+  - `GetImmichConfig()` - Thread-safe Immich config reading
+  - `SetImmichEmail()` - Update Immich email configuration
+  - `SetMLModel()` - Update ML model selection
 - **Data structures**: `ConfigVariables`, `ImmichConfig` structs
-- **File operations**: `CopyFile()`, JSON parsing functions
-- **Utility functions**: `ParseBool()`, `GetLowerUpper()`
+- **Validation functions** (validation.go):
+  - `ValidateTimezone()` - IANA timezone validation
+  - `ValidateTimeFormat()` - HH:MM format validation (00:00-23:59)
+  - `ValidateTailscaleAuthKey()` - tskey- prefix and length validation
+  - `ValidateEmail()` - Regex-based email validation
+- **ML Model support**:
+  - `ValidMLModels` map - Single source of truth for allowed models
+  - `IsValidMLModel()` - Validation helper
+  - `GetMLModelDisplayName()` - Display name helper
+- **Concurrency safety**:
+  - `nixConfigMu` - Protects nixconfig.json operations
+  - `immichConfigMu` - Protects immich-config.json operations
+- **Build-specific paths**:
+  - `paths_dev.go` - Development paths (test/ directories)
+  - `paths_prod.go` - Production paths (/etc/nixos/, /tank/)
+- **Utility functions**: `ParseBool()`, `GetLowerUpper()`, `CopyFile()`
 
 #### handlers package
-- **SystemHandler**: Configuration save/apply, system power management
-- **ImmichHandler**: Service status, start/stop/update, email configuration
-- **BackupHandler**: USB backup operations, disk management
+- **SystemHandler**:
+  - Configuration save/apply with validation
+  - Automatic rollback on nixos-rebuild failure
+  - System power management
+  - Uses modular template fragments for HTMX responses
+- **ImmichHandler**:
+  - Service status, start/stop/update
+  - Email configuration with validation
+  - ML model selection with centralized validation
+  - Uses template files instead of inline HTML
+- **BackupHandler**:
+  - USB backup operations
+  - Disk management
+  - Uses template fragments for dynamic content
 
 #### services package
 - **BackupService**: Business logic for backup operations
 
 #### system package
-- **NixOS management**: `SwitchConfigJSON()`, `ApplyChanges()`
+- **NixOS management**: `ApplyChanges()` (nixos-rebuild switch), `RollbackConfigJSON()`
 - **Docker management**: `ImmichService()`, `UpdateImmichContainer()`
 - **System operations**: `PowerOff()`, `Reboot()`, `GetStatus()`
 - **Backup operations**: `GetEligibleDisks()`
+- **Note**: `SwitchConfigJSON()` moved to config package for better encapsulation
 
 ## Development Workflow
 
@@ -256,17 +331,40 @@ GET  /backupstatus  # Backup operation status (HandleGetBackupStatus)
 ## Important Constants and Paths
 
 ### config package constants
+
+Path constants are now defined in separate files based on build tags:
+
+#### Development Build (`-tags dev`)
+From `internal/config/paths_dev.go`:
 ```go
-const NixDir string = "test/nixos/"           # Development: test/, Production: "/etc/nixos/"
-const ConfigFile string = "nixconfig.json"    # JSON configuration file
-const ImmichDir string = "/tank/immich-config/" # Immich docker-compose location
-const TankImmich string = "test/tank/immich/" # Immich config JSON location
+const (
+    NixDir     = "test/nixos/"              // NixOS configuration directory
+    ImmichDir  = "test/tank/immich-config/" // Immich docker-compose directory
+    TankImmich = "test/tank/immich/"        // Immich config JSON location
+)
+```
+
+#### Production Build (default)
+From `internal/config/paths_prod.go`:
+```go
+const (
+    NixDir     = "/etc/nixos/"          // NixOS configuration directory
+    ImmichDir  = "/tank/immich-config/" // Immich docker-compose directory
+    TankImmich = "/tank/immich/"        // Immich config JSON location
+)
+```
+
+#### Shared Constants
+From `internal/config/parser.go`:
+```go
+const ConfigFile = "nixconfig.json"  // JSON configuration file name
 ```
 
 ### Key file locations
-- **Configuration**: `nixconfig.json` (replaces template-based approach)
-- **Backups**: `nixconfig.json.old` (rollback files)
-- **NixOS modules**: Modular `.nix` files using `builtins.fromJSON`
+- **NixOS Configuration**: `nixconfig.json` (JSON-based, replaces template approach)
+- **Rollback Backups**: `nixconfig.json.old`, `immich-config.json.old`
+- **Temporary Files**: `nixconfig.json.tmp`, `immich-config.json.tmp`
+- **NixOS modules**: Modular `.nix` files using `builtins.fromJSON` to read nixconfig.json
 
 ## Security Considerations
 
@@ -361,11 +459,13 @@ http.Redirect(w, r, "/", http.StatusSeeOther)
 ## Future Development Plans
 
 ### Core System
-- Auto-rollback if `nixos-rebuild` fails (timeout and manual rollback)
-- JSON configuration management (completed)
-- Modular package architecture (completed)
+- ✅ Auto-rollback if `nixos-rebuild` fails (completed in alpha.3)
+- ✅ JSON configuration management (completed in alpha.3)
+- ✅ Modular package architecture (completed in alpha.3)
+- ✅ Input validation framework (completed in alpha.3)
 - Add unit tests
 - Internal backup failsafe (backup server config to data disk, photos to boot disk)
+- Configuration sanitization (validation complete, sanitization pending)
 
 ### Frontend & UI
 - Add HTMX and CSS libraries locally (not CDN)
@@ -379,6 +479,11 @@ http.Redirect(w, r, "/", http.StatusSeeOther)
 - Tailscale start/stop/sign-out/serve integration
 - Cloudflare Tunnel integration (OIDC, docs)
 - Pangolin integration (basic, docs for self-hosted VPS)
+
+### Immich Features
+- ✅ ML model selection (3 models supported - completed in alpha.3)
+- ✅ Email notification configuration (completed in alpha.2)
+- Advanced Immich API integration
 
 ### Medium/Long-term
 - Mobile-first CSS/UI
