@@ -115,8 +115,18 @@ func (h *ImmichHandler) HandleEmailPost(w http.ResponseWriter, r *http.Request) 
         <br><small>Use your gmail account with an <a href="https://support.google.com/mail/answer/185833">app password</a> to allow for immich to send emails</small>
     </form>`
 
-	tmpl, _ := htmltemplate.New("t").Parse(htmlStr)
-	tmpl.Execute(w, emailData)
+	tmpl, err := htmltemplate.New("t").Parse(htmlStr)
+	if err != nil {
+		slog.Error("| Error parsing email form template |", "err", err)
+		http.Error(w, "Failed to render email form", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tmpl.Execute(w, emailData); err != nil {
+		slog.Error("| Error executing email form template |", "err", err)
+		http.Error(w, "Failed to render email form", http.StatusInternalServerError)
+		return
+	}
 }
 
 // HandleMLModelPost processes machine learning model configuration updates
@@ -177,6 +187,16 @@ func (h *ImmichHandler) HandleMLModelPost(w http.ResponseWriter, r *http.Request
         <br><small>Select the machine learning model for image recognition. Higher quality models require more resources.</small>
     </form>`
 
-	tmpl, _ := htmltemplate.New("t").Parse(htmlStr)
-	tmpl.Execute(w, mlData)
+	tmpl, err := htmltemplate.New("t").Parse(htmlStr)
+	if err != nil {
+		slog.Error("| Error parsing ML model form template |", "err", err)
+		http.Error(w, "Failed to render ML model form", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tmpl.Execute(w, mlData); err != nil {
+		slog.Error("| Error executing ML model form template |", "err", err)
+		http.Error(w, "Failed to render ML model form", http.StatusInternalServerError)
+		return
+	}
 }

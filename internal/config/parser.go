@@ -96,10 +96,17 @@ func getImmichConfigUnsafe() (*ImmichConfig, error) {
 	}
 	defer file.Close()
 
-	byteValue, _ := io.ReadAll(file)
+	byteValue, err := io.ReadAll(file)
+	if err != nil {
+		slog.Debug("| Error reading immich config file contents |", "err", err)
+		return nil, fmt.Errorf("failed to read config file: %w", err)
+	}
 
 	var immichConfig ImmichConfig
-	json.Unmarshal(byteValue, &immichConfig)
+	if err := json.Unmarshal(byteValue, &immichConfig); err != nil {
+		slog.Debug("| Error unmarshaling immich config JSON |", "err", err)
+		return nil, fmt.Errorf("failed to parse config JSON: %w", err)
+	}
 
 	return &immichConfig, nil
 }

@@ -35,8 +35,18 @@ func (h *BackupHandler) HandleGetDisks(w http.ResponseWriter, r *http.Request) {
 	if len(disks) == 0 {
 		slog.Debug("No eligible disks found")
 		htmlStr := `<option>No eligible disks found</option>`
-		tmpl, _ := htmltemplate.New("t").Parse(htmlStr)
-		tmpl.Execute(w, disks)
+		tmpl, err := htmltemplate.New("t").Parse(htmlStr)
+		if err != nil {
+			slog.Error("| Error parsing no disks template |", "err", err)
+			http.Error(w, "Failed to render disk list", http.StatusInternalServerError)
+			return
+		}
+
+		if err := tmpl.Execute(w, disks); err != nil {
+			slog.Error("| Error executing no disks template |", "err", err)
+			http.Error(w, "Failed to render disk list", http.StatusInternalServerError)
+			return
+		}
 		return
 	}
 
@@ -45,8 +55,18 @@ func (h *BackupHandler) HandleGetDisks(w http.ResponseWriter, r *http.Request) {
 	<option value={{.Identifier}}>{{.PartitionLabel}} ({{.PartitionSize}}) on {{.Model}}</option>
 	{{end}}
 	`
-	tmpl, _ := htmltemplate.New("t").Parse(htmlStr)
-	tmpl.Execute(w, disks)
+	tmpl, err := htmltemplate.New("t").Parse(htmlStr)
+	if err != nil {
+		slog.Error("| Error parsing disk options template |", "err", err)
+		http.Error(w, "Failed to render disk list", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tmpl.Execute(w, disks); err != nil {
+		slog.Error("| Error executing disk options template |", "err", err)
+		http.Error(w, "Failed to render disk list", http.StatusInternalServerError)
+		return
+	}
 }
 
 // HandleBackup processes backup requests
@@ -102,8 +122,18 @@ func (h *BackupHandler) HandleBackup(w http.ResponseWriter, r *http.Request) {
         <button id="start-backup" type="submit" hx-post="/backup" hx-target="#backup-form" hx-confirm="Are you sure you want to start the backup? This may take some time.">Start Backup</button>
         <br><small>Select backup disk from list. In order for a disk to be eligible, it must be connected via USB and have a partition formatted exFAT.</small>
 	`
-	tmpl, _ := htmltemplate.New("t").Parse(htmlStr)
-	tmpl.Execute(w, "")
+	tmpl, err := htmltemplate.New("t").Parse(htmlStr)
+	if err != nil {
+		slog.Error("| Error parsing backup success template |", "err", err)
+		http.Error(w, "Backup completed but failed to render response", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tmpl.Execute(w, ""); err != nil {
+		slog.Error("| Error executing backup success template |", "err", err)
+		http.Error(w, "Backup completed but failed to render response", http.StatusInternalServerError)
+		return
+	}
 }
 
 // HandleGetBackupStatus returns backup status information
@@ -117,6 +147,16 @@ func (h *BackupHandler) HandleGetBackupStatus(w http.ResponseWriter, r *http.Req
         <button id="start-backup" type="submit" hx-post="/backup" hx-target="#backup-form" hx-confirm="Are you sure you want to start the backup? This may take some time.">Start Backup</button>
         <br><small>Select backup disk from list. In order for a disk to be eligible, it must be connected via USB and have a partition formatted exFAT.</small>
 	`
-	tmpl, _ := htmltemplate.New("t").Parse(htmlStr)
-	tmpl.Execute(w, "")
+	tmpl, err := htmltemplate.New("t").Parse(htmlStr)
+	if err != nil {
+		slog.Error("| Error parsing backup status template |", "err", err)
+		http.Error(w, "Failed to render backup status", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tmpl.Execute(w, ""); err != nil {
+		slog.Error("| Error executing backup status template |", "err", err)
+		http.Error(w, "Failed to render backup status", http.StatusInternalServerError)
+		return
+	}
 }

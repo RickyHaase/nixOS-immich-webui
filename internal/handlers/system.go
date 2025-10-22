@@ -43,7 +43,11 @@ func (h *SystemHandler) HandleRoot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl.Execute(w, cfg)
+	if err := tmpl.Execute(w, cfg); err != nil {
+		slog.Error("| Error executing root template |", "err", err)
+		http.Error(w, "Failed to render page", http.StatusInternalServerError)
+		return
+	}
 }
 
 // HandleSave processes configuration save requests
@@ -96,7 +100,11 @@ func (h *SystemHandler) HandleSave(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl.Execute(w, cfg)
+	if err := tmpl.Execute(w, cfg); err != nil {
+		slog.Error("| Error executing save template |", "err", err)
+		http.Error(w, "Failed to render save confirmation", http.StatusInternalServerError)
+		return
+	}
 }
 
 // HandleApply applies configuration changes
