@@ -148,3 +148,25 @@ type EligibleDisk struct {
 	Model          string
 	Identifier     string
 }
+
+// ValidMLModels defines the allowed machine learning models for Immich
+// This is the single source of truth for ML model validation
+var ValidMLModels = map[string]string{
+	"ViT-B-32__openai":                "Default (ViT-B-32__openai)",
+	"ViT-B-16-SigLIP__webli":          "Improved (ViT-B-16-SigLIP__webli)",
+	"ViT-SO400M-14-SigLIP-384__webli": "Beefy (ViT-SO400M-14-SigLIP-384__webli)",
+}
+
+// IsValidMLModel checks if the given model name is valid
+func IsValidMLModel(modelName string) bool {
+	_, ok := ValidMLModels[modelName]
+	return ok
+}
+
+// GetMLModelDisplayName returns the display name for a given model
+func GetMLModelDisplayName(modelName string) string {
+	if displayName, ok := ValidMLModels[modelName]; ok {
+		return displayName
+	}
+	return modelName
+}

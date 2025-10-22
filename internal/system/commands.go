@@ -27,6 +27,30 @@ func ApplyChanges() error {
 	return nil
 }
 
+// RollbackConfigJSON restores the previous configuration from .old backup
+// This function is called when nixos-rebuild fails to restore a working state
+func RollbackConfigJSON() error {
+	slog.Info("| Rolling back configuration to previous version |")
+
+	configPath := config.NixDir + config.NixConfigFile
+	backupPath := config.NixDir + config.NixConfigFile + ".old"
+
+	// Check if backup exists
+	if _, err := os.Stat(backupPath); os.IsNotExist(err) {
+		slog.Error("| No backup configuration found for rollback |", "path", backupPath)
+		return fmt.Errorf("no backup configuration found at %s", backupPath)
+	}
+
+	// Restore from backup using atomic rename
+	if err := os.Rename(backupPath, configPath); err != nil {
+		slog.Error("| Failed to restore backup configuration |", "err", err)
+		return fmt.Errorf("failed to restore backup: %w", err)
+	}
+
+	slog.Info("| Configuration successfully rolled back to previous version |")
+	return nil
+}
+
 // GetStatus returns the status of immich-app.service
 func GetStatus() string {
 	slog.Debug("getStatus()")

@@ -166,14 +166,8 @@ func SetMLModel(modelName string) error {
 
 	slog.Debug("setMLModel()", "modelName", modelName)
 
-	// Validate model name - only allow specific models
-	validModels := map[string]bool{
-		"ViT-B-32__openai":                true,
-		"ViT-B-16-SigLIP__webli":          true,
-		"ViT-SO400M-14-SigLIP-384__webli": true,
-	}
-
-	if !validModels[modelName] {
+	// Validate model name using centralized validation
+	if !IsValidMLModel(modelName) {
 		slog.Error("| Invalid ML model name |", "modelName", modelName)
 		return fmt.Errorf("invalid model name: %s", modelName)
 	}
