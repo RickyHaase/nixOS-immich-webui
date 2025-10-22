@@ -245,7 +245,7 @@ func SwitchConfigJSON() error {
 	}
 
 	slog.Info("Replacing nixconfig.json with nixconfig.json.tmp...")
-	if err := copyFileUnsafe(tmpPath, configPath); err != nil {
+	if err := os.Rename(tmpPath, configPath); err != nil {
 		slog.Debug("Error replacing JSON config file", "err", err)
 		return err
 	}
@@ -269,7 +269,7 @@ func switchImmichConfigJSON() error {
 	}
 
 	slog.Info("Replacing immich-config.json from immich-config.json.tmp...")
-	if err := copyFileUnsafe(tmpFile, configFile); err != nil {
+	if err := os.Rename(tmpFile, configFile); err != nil {
 		slog.Debug("Error replacing immich config file", "err", err)
 		return err
 	}
