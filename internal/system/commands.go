@@ -10,30 +10,6 @@ import (
 	"github.com/RickyHaase/nixOS-immich-webui/internal/config"
 )
 
-// SwitchConfigJSON backs up current JSON config and replaces with temp config
-func SwitchConfigJSON() error {
-	slog.Debug("SwitchConfigJSON()")
-	configPath := config.NixDir + config.ConfigFile
-	backupPath := config.NixDir + config.ConfigFile + ".old"
-	tmpPath := config.NixDir + config.ConfigFile + ".tmp"
-
-	slog.Info("Backing up nixconfig.json to nixconfig.json.old...")
-	if err := config.CopyFile(configPath, backupPath); err != nil {
-		slog.Debug("Error backing up JSON config file", "err", err)
-		return err
-	}
-
-	slog.Info("Replacing nixconfig.json with nixconfig.json.tmp...")
-	if err := config.CopyFile(tmpPath, configPath); err != nil {
-		slog.Debug("Error replacing JSON config file", "err", err)
-		return err
-	}
-
-	slog.Info("JSON configuration file switch complete.")
-	return nil
-}
-
-
 // ApplyChanges runs nixos-rebuild switch to apply configuration changes
 func ApplyChanges() error {
 	slog.Debug("applyChanges()")
@@ -48,6 +24,30 @@ func ApplyChanges() error {
 	}
 
 	slog.Info("NixOS rebuild completed successfully.")
+	return nil
+}
+
+// RollbackConfigJSON restores the previous configuration from .old backup
+// This function is called when nixos-rebuild fails to restore a working state
+func RollbackConfigJSON() error {
+	slog.Info("| Rolling back configuration to previous version |")
+
+	configPath := config.NixDir + config.NixConfigFile
+	backupPath := config.NixDir + config.NixConfigFile + ".old"
+
+	// Check if backup exists
+	if _, err := os.Stat(backupPath); os.IsNotExist(err) {
+		slog.Error("| No backup configuration found for rollback |", "path", backupPath)
+		return fmt.Errorf("no backup configuration found at %s", backupPath)
+	}
+
+	// Restore from backup using atomic rename
+	if err := os.Rename(backupPath, configPath); err != nil {
+		slog.Error("| Failed to restore backup configuration |", "err", err)
+		return fmt.Errorf("failed to restore backup: %w", err)
+	}
+
+	slog.Info("| Configuration successfully rolled back to previous version |")
 	return nil
 }
 
@@ -69,7 +69,7 @@ func GetStatus() string {
 		return "Stopped"
 	default:
 		slog.Error("| Unexpected status of immich-app.service |", "err", err)
-		return "Error getting status"
+		return "Unknown state"
 	}
 }
 

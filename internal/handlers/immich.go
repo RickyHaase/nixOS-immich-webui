@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"embed"
+	"fmt"
 	htmltemplate "html/template"
 	"log/slog"
 	"net/http"
@@ -84,9 +85,19 @@ func (h *ImmichHandler) HandleEmailPost(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := config.SetImmichConfig(r.FormValue("gmail-address"), r.FormValue("gmail-password")); err != nil {
-		slog.Error("| Failed to set Immich config |", "err", err)
-		http.Error(w, "Failed to set Immich config.", http.StatusInternalServerError)
+	email := r.FormValue("gmail-address")
+	password := r.FormValue("gmail-password")
+
+	// Validate email format
+	if err := config.ValidateEmail(email); err != nil {
+		slog.Error("| Invalid email format |", "err", err)
+		http.Error(w, fmt.Sprintf("Validation error: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	if err := config.SetImmichEmail(email, password); err != nil {
+		slog.Error("| Failed to set Immich email config |", "err", err)
+		http.Error(w, "Failed to set Immich email config.", http.StatusInternalServerError)
 		return
 	}
 
@@ -107,14 +118,71 @@ func (h *ImmichHandler) HandleEmailPost(w http.ResponseWriter, r *http.Request) 
 		EmailPass: immich.Notifications.SMTP.Transport.Password != "",
 	}
 
-	htmlStr := `    <form id="email-form" action="/email" method="post">
-        <label for="gmail-address">Gmail Address:</label>
-        <input type="email" id="gmail-address" name="gmail-address" placeholder="example@gmail.com" value="{{if .Email}}{{.Email}}{{else}}{{end}}">        <label for="gmail-password">Gmail App Password:</label>
-        <input type="password" id="gmail-password" name="gmail-password" placeholder="{{if .EmailPass}}password is set{{else}}fded beid aibr kxps{{end}}">
-        <button type="submit" hx-post="/email" hx-target="#email-form">Submit</button>
-        <br><small>Use your gmail account with an <a href="https://support.google.com/mail/answer/185833">app password</a> to allow for immich to send emails</small>
-    </form>`
+	tmpl, err := htmltemplate.ParseFS(h.templates, "web/email_form.html")
+	if err != nil {
+		slog.Error("| Error parsing email form template |", "err", err)
+		http.Error(w, "Failed to render email form", http.StatusInternalServerError)
+		return
+	}
 
-	tmpl, _ := htmltemplate.New("t").Parse(htmlStr)
-	tmpl.Execute(w, emailData)
+	if err := tmpl.Execute(w, emailData); err != nil {
+		slog.Error("| Error executing email form template |", "err", err)
+		http.Error(w, "Failed to render email form", http.StatusInternalServerError)
+		return
+	}
+}
+
+// HandleMLModelPost processes machine learning model configuration updates
+func (h *ImmichHandler) HandleMLModelPost(w http.ResponseWriter, r *http.Request) {
+	slog.Info("Received ML Model Post")
+
+	err := r.ParseForm()
+	if err != nil {
+		slog.Error("| Error parsing ML model form submission |", "err", err)
+		http.Error(w, "Failed to parse form data", http.StatusBadRequest)
+		return
+	}
+
+	modelName := r.FormValue("ml-model")
+
+	// Validate model name using centralized validation
+	if !config.IsValidMLModel(modelName) {
+		slog.Error("| Invalid ML model submitted |", "modelName", modelName)
+		http.Error(w, "Invalid model selection.", http.StatusBadRequest)
+		return
+	}
+
+	if err := config.SetMLModel(modelName); err != nil {
+		slog.Error("| Failed to set ML model |", "err", err)
+		http.Error(w, "Failed to set ML model.", http.StatusInternalServerError)
+		return
+	}
+
+	// Get current model from immich-config.json
+	immich, err := config.GetImmichConfig()
+	if err != nil {
+		slog.Error("| Error parsing immich-config.json |", "err", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Create struct for template data
+	mlData := struct {
+		ModelName string
+	}{
+		ModelName: immich.MachineLearning.Clip.ModelName,
+	}
+
+	tmpl, err := htmltemplate.ParseFS(h.templates, "web/ml_form.html")
+	if err != nil {
+		slog.Error("| Error parsing ML model form template |", "err", err)
+		http.Error(w, "Failed to render ML model form", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tmpl.Execute(w, mlData); err != nil {
+		slog.Error("| Error executing ML model form template |", "err", err)
+		http.Error(w, "Failed to render ML model form", http.StatusInternalServerError)
+		return
+	}
 }

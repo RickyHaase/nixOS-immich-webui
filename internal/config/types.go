@@ -30,6 +30,7 @@ type NixConfig struct {
 	TSAuthkey    string
 	Email        string
 	EmailPass    bool
+	MLModel      string
 }
 
 // ToNixConfig converts ConfigVariables to NixConfig structure for template compatibility
@@ -45,13 +46,14 @@ func (cv *ConfigVariables) ToNixConfig() *NixConfig {
 		Email:        "",
 		EmailPass:    false,
 	}
-	
-	// Email fields are managed separately - get them from immich-config.json for template compatibility
+
+	// Email fields and ML model are managed separately - get them from immich-config.json for template compatibility
 	if immich, err := GetImmichConfig(); err == nil {
 		nixConfig.Email = immich.Notifications.SMTP.Transport.Username
 		nixConfig.EmailPass = immich.Notifications.SMTP.Transport.Password != ""
+		nixConfig.MLModel = immich.MachineLearning.Clip.ModelName
 	}
-	
+
 	return nixConfig
 }
 
@@ -61,6 +63,7 @@ type ImmichConfig struct {
 	Notifications   Notifications   `json:"notifications"`
 	Server          Server          `json:"server"`
 	StorageTemplate StorageTemplate `json:"storageTemplate"`
+	MachineLearning MachineLearning `json:"machineLearning"`
 }
 
 // Backup configuration for Immich
@@ -111,6 +114,17 @@ type StorageTemplate struct {
 	Template                string `json:"template"`
 }
 
+type MachineLearning struct {
+	Enabled bool     `json:"enabled"`
+	URLs    []string `json:"urls"`
+	Clip    Clip     `json:"clip"`
+}
+
+type Clip struct {
+	Enabled   bool   `json:"enabled"`
+	ModelName string `json:"modelName"`
+}
+
 // BlockDevice represents a storage device from lsblk output
 type BlockDevice struct {
 	Name      string        `json:"name"`
@@ -133,4 +147,26 @@ type EligibleDisk struct {
 	PartitionSize  string
 	Model          string
 	Identifier     string
+}
+
+// ValidMLModels defines the allowed machine learning models for Immich
+// This is the single source of truth for ML model validation
+var ValidMLModels = map[string]string{
+	"ViT-B-32__openai":                "Default (ViT-B-32__openai)",
+	"ViT-B-16-SigLIP__webli":          "Improved (ViT-B-16-SigLIP__webli)",
+	"ViT-SO400M-14-SigLIP-384__webli": "Beefy (ViT-SO400M-14-SigLIP-384__webli)",
+}
+
+// IsValidMLModel checks if the given model name is valid
+func IsValidMLModel(modelName string) bool {
+	_, ok := ValidMLModels[modelName]
+	return ok
+}
+
+// GetMLModelDisplayName returns the display name for a given model
+func GetMLModelDisplayName(modelName string) string {
+	if displayName, ok := ValidMLModels[modelName]; ok {
+		return displayName
+	}
+	return modelName
 }

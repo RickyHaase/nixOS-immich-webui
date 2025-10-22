@@ -26,8 +26,9 @@
 !docs/dev/*.md
 !docs/setup/*.md
 
-!internal/templates/web/index.html
-!internal/templates/web/save.html
+!internal/templates/web/*.html
+internal/templates/web/backup_config.html
+internal/templates/web/backup_dashboard.html
 #!internal/templates/immich/immich-config.json
 
 !test/nixos/nixconfig.json

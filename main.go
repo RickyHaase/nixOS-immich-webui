@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log/slog"
 	"net/http"
 
@@ -10,6 +11,16 @@ import (
 )
 
 func main() {
+	// Parse command-line flags
+	debug := flag.Bool("debug", false, "enable debug logging")
+	flag.Parse()
+
+	// Set log level based on flag
+	if *debug {
+		slog.SetLogLoggerLevel(slog.LevelDebug)
+		slog.Debug("Debug logging enabled")
+	}
+
 	// Initialize services
 	backupService := services.NewBackupService()
 
@@ -34,14 +45,12 @@ func main() {
 	mux.HandleFunc("POST /start", immichHandler.HandleStart)
 	mux.HandleFunc("POST /update", immichHandler.HandleUpdate)
 	mux.HandleFunc("POST /email", immichHandler.HandleEmailPost)
+	mux.HandleFunc("POST /mlmodel", immichHandler.HandleMLModelPost)
 	
 	// Backup routes
 	mux.HandleFunc("GET /disks", backupHandler.HandleGetDisks)
 	mux.HandleFunc("POST /backup", backupHandler.HandleBackup)
 	mux.HandleFunc("GET /backupstatus", backupHandler.HandleGetBackupStatus)
-
-	// Debug mode configuration (uncomment to enable)
-	// slog.SetLogLoggerLevel(slog.LevelDebug)
 
 	slog.Info("Server started at http://localhost:8000")
 	if err := http.ListenAndServe("localhost:8000", mux); err != nil {

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"embed"
+	"fmt"
 	htmltemplate "html/template"
 	"log/slog"
 	"net/http"
@@ -43,7 +44,11 @@ func (h *SystemHandler) HandleRoot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl.Execute(w, cfg)
+	if err := tmpl.Execute(w, cfg); err != nil {
+		slog.Error("| Error executing root template |", "err", err)
+		http.Error(w, "Failed to render page", http.StatusInternalServerError)
+		return
+	}
 }
 
 // HandleSave processes configuration save requests
@@ -59,13 +64,41 @@ func (h *SystemHandler) HandleSave(w http.ResponseWriter, r *http.Request) {
 
 	slog.Debug("Received Form", "body", r.Form)
 
+	// Extract form values
+	timezone := r.FormValue("timezone")
+	updateTime := r.FormValue("update-time")
+	tailscaleAuthKey := r.FormValue("tailscale-authkey")
+	tailscaleEnabled := config.ParseBool(r.FormValue("tailscale"))
+
+	// Validate inputs
+	if err := config.ValidateTimezone(timezone); err != nil {
+		slog.Error("| Invalid timezone |", "err", err)
+		http.Error(w, fmt.Sprintf("Validation error: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	if err := config.ValidateTimeFormat(updateTime); err != nil {
+		slog.Error("| Invalid time format |", "err", err)
+		http.Error(w, fmt.Sprintf("Validation error: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Only validate Tailscale auth key if Tailscale is enabled
+	if tailscaleEnabled {
+		if err := config.ValidateTailscaleAuthKey(tailscaleAuthKey); err != nil {
+			slog.Error("| Invalid Tailscale auth key |", "err", err)
+			http.Error(w, fmt.Sprintf("Validation error: %v", err), http.StatusBadRequest)
+			return
+		}
+	}
+
 	// Build new JSON configuration structure
 	cfgJSON := &config.ConfigVariables{}
-	cfgJSON.System.TimeZone = r.FormValue("timezone")
+	cfgJSON.System.TimeZone = timezone
 	cfgJSON.System.AutoUpgrade = config.ParseBool(r.FormValue("auto-updates"))
-	cfgJSON.System.UpgradeTime = r.FormValue("update-time")
-	cfgJSON.RemoteAccess.Tailscale.Enable = config.ParseBool(r.FormValue("tailscale"))
-	cfgJSON.RemoteAccess.Tailscale.AuthKey = r.FormValue("tailscale-authkey")
+	cfgJSON.System.UpgradeTime = updateTime
+	cfgJSON.RemoteAccess.Tailscale.Enable = tailscaleEnabled
+	cfgJSON.RemoteAccess.Tailscale.AuthKey = tailscaleAuthKey
 
 	t1, t2, err := config.GetLowerUpper(cfgJSON.System.UpgradeTime)
 	if err != nil {
@@ -96,22 +129,35 @@ func (h *SystemHandler) HandleSave(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl.Execute(w, cfg)
+	if err := tmpl.Execute(w, cfg); err != nil {
+		slog.Error("| Error executing save template |", "err", err)
+		http.Error(w, "Failed to render save confirmation", http.StatusInternalServerError)
+		return
+	}
 }
 
 // HandleApply applies configuration changes
 func (h *SystemHandler) HandleApply(w http.ResponseWriter, r *http.Request) {
 	slog.Info("Received Apply Request")
 
-	if err := system.SwitchConfigJSON(); err != nil {
+	if err := config.SwitchConfigJSON(); err != nil {
 		slog.Error("| Error when switching JSON config files |", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if err := system.ApplyChanges(); err != nil {
-		slog.Error("| Error Applying Changes |", "err", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		slog.Error("| Error Applying Changes - attempting rollback |", "err", err)
+
+		// Attempt to rollback configuration to previous working state
+		if rollbackErr := system.RollbackConfigJSON(); rollbackErr != nil {
+			slog.Error("| Rollback failed |", "rollbackErr", rollbackErr)
+			http.Error(w, fmt.Sprintf("nixos-rebuild failed and rollback also failed: %v. Original error: %v", rollbackErr, err), http.StatusInternalServerError)
+			return
+		}
+
+		slog.Info("| Configuration rolled back successfully |")
+		http.Error(w, fmt.Sprintf("nixos-rebuild failed: %v. Configuration has been rolled back to previous version.", err), http.StatusInternalServerError)
 		return
 	}
 

@@ -1,6 +1,6 @@
 {
   "system": {
-    "timeZone": "America/Denver",
+    "timeZone": "America/New_York",
     "autoUpgrade": true,
     "upgradeTime": "02:00",
     "upgradeLower": "02:30",

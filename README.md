@@ -27,12 +27,13 @@ Have a "functional" web UI that can display the currently applied NixOS config (
   - [x] **Claude Coded** Re-organize documentation and create CLAUDE.md for repo
   - [x] **Claude Coded** Refactor single main.go into seperate modules for better organization and easier maintainability
   - [x] Rebuild nix config files and replace the parsing/updating system with JSON
-  - [ ] Get an updated Immich config and finalize the directory for compose & config storage (and fix what Claude Code broke)
+  - [x] Get an updated Immich config and finalize the directory for compose & config storage (and fix what Claude Code broke)
   - [ ] Update backups for new config file locations
   - [ ] Complete documentation for full server setup and binary build (double check behind Claude Code)
 - [ ] v0.1.0-aplha.4
   - [ ] Add unit tests
   - [ ] Add GitHub binary releases
+  - [ ] Add systemctl service for running the nixmich binary
 - [ ] v0.1.0-beta.1
   - [ ] Update repo name and binary name (needs a better name and a better way to reference project/binary in documentation) <!--- nixmich: easy and relable photo storage applicance made with nixos and immich -->
   - [ ] Get some CSS ([immich-ui](https://ui.immich.app)) and make a usable mobile-first UI <!--- (logo assets; [nix logo](https://github.com/NixOS/nixos-artwork/tree/master/logo) + [immich colors](https://ui.immich.app/components/logo?)-->
