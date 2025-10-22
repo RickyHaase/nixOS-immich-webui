@@ -29,6 +29,8 @@ Have a "functional" web UI that can display the currently applied NixOS config (
   - [x] Rebuild nix config files and replace the parsing/updating system with JSON
   - [x] Get an updated Immich config and finalize the directory for compose & config storage (and fix what Claude Code broke)
   - [ ] Update backups for new config file locations
+    - [ ] Add progress bar for backup status
+    - [ ] Add backup history tracker log (with anticipation for internal safety backups)
   - [ ] Complete documentation for full server setup and binary build (double check behind Claude Code)
 - [ ] v0.1.0-aplha.4
   - [ ] Add unit tests
