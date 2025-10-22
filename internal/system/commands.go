@@ -13,9 +13,9 @@ import (
 // SwitchConfigJSON backs up current JSON config and replaces with temp config
 func SwitchConfigJSON() error {
 	slog.Debug("SwitchConfigJSON()")
-	configPath := config.NixDir + config.ConfigFile
-	backupPath := config.NixDir + config.ConfigFile + ".old"
-	tmpPath := config.NixDir + config.ConfigFile + ".tmp"
+	configPath := config.NixDir + config.NixConfigFile
+	backupPath := config.NixDir + config.NixConfigFile + ".old"
+	tmpPath := config.NixDir + config.NixConfigFile + ".tmp"
 
 	slog.Info("Backing up nixconfig.json to nixconfig.json.old...")
 	if err := config.CopyFile(configPath, backupPath); err != nil {
