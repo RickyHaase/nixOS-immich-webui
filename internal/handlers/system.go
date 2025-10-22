@@ -103,7 +103,7 @@ func (h *SystemHandler) HandleSave(w http.ResponseWriter, r *http.Request) {
 func (h *SystemHandler) HandleApply(w http.ResponseWriter, r *http.Request) {
 	slog.Info("Received Apply Request")
 
-	if err := system.SwitchConfigJSON(); err != nil {
+	if err := config.SwitchConfigJSON(); err != nil {
 		slog.Error("| Error when switching JSON config files |", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

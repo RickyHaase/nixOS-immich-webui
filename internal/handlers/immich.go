@@ -84,9 +84,9 @@ func (h *ImmichHandler) HandleEmailPost(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := config.SetImmichConfig(r.FormValue("gmail-address"), r.FormValue("gmail-password")); err != nil {
-		slog.Error("| Failed to set Immich config |", "err", err)
-		http.Error(w, "Failed to set Immich config.", http.StatusInternalServerError)
+	if err := config.SetImmichEmail(r.FormValue("gmail-address"), r.FormValue("gmail-password")); err != nil {
+		slog.Error("| Failed to set Immich email config |", "err", err)
+		http.Error(w, "Failed to set Immich email config.", http.StatusInternalServerError)
 		return
 	}
 
