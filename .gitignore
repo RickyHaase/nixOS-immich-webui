@@ -26,6 +26,7 @@
 !docs/dev/*.md
 !docs/setup/*.md
 !docs/admin/*.md
+!docs/claude/*.md
 
 !internal/templates/web/*.html
 internal/templates/web/backup_config.html
