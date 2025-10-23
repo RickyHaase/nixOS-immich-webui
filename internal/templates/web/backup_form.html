@@ -1,7 +1,15 @@
- 		<label for="select-disk">Select Disk:</label>
-        <select name="select-disk" id="select-disk" hx-get="/disks" hx-trigger="load" hx-confirm="Backup Completed Successfully!">
-            <option>Refresh page to re-load backup options</option>
-        </select>
-        <button id="refresh" type="button" hx-get="/disks" hx-target="#select-disk" hx-swap="innerHTML">Refresh List</button>
-        <button id="start-backup" type="submit" hx-post="/backup" hx-target="#backup-form" hx-confirm="Are you sure you want to start the backup? This may take some time.">Start Backup</button>
-        <br><small>Select backup disk from list. In order for a disk to be eligible, it must be connected via USB and have a partition formatted exFAT.</small>
+<label for="select-disk">Select Disk:</label>
+<select name="select-disk" id="select-disk" hx-get="/disks" hx-trigger="load">
+	<option>Loading disks...</option>
+</select>
+<button id="refresh" type="button" hx-get="/disks" hx-target="#select-disk" hx-swap="innerHTML">Refresh List</button>
+<button id="start-backup" type="submit" hx-post="/backup" hx-target="#backup-result" hx-confirm="Are you sure you want to start the backup? This may take some time.">Start Backup</button>
+<br><small>Select backup disk from list. In order for a disk to be eligible, it must be connected via USB and have a partition formatted exFAT.</small>
+
+<!-- Backup result message (shows "Backup Started!" when backup begins) -->
+<div id="backup-result"></div>
+
+<!-- Backup status - loads once, then polling controlled by response -->
+<div id="backup-status" hx-get="/backupstatus" hx-trigger="load" hx-swap="innerHTML">
+	<!-- Status will be loaded here -->
+</div>

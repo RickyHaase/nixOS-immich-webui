@@ -51,7 +51,7 @@ Items marked with checkboxes indicate completion status.
   - [ ] Centralized configuration schema (externally there is nix config, immich config, immich env, etc. Can this be distilled into one config for backup/restore?)
 
 #### Core System
-- [ ] Auto-rollback implementation strategy
+- [x] Auto-rollback implementation strategy
   - Auto-rollback if no web requests accepted within 60s of config apply
   - Optional manual rollback to previous config
   - Integration with systemd service monitoring

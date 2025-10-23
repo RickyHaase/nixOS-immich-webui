@@ -28,9 +28,9 @@ Have a "functional" web UI that can display the currently applied NixOS config (
   - [x] **Claude Coded** Refactor single main.go into seperate modules for better organization and easier maintainability
   - [x] Rebuild nix config files and replace the parsing/updating system with JSON
   - [x] Get an updated Immich config and finalize the directory for compose & config storage (and fix what Claude Code broke)
-  - [ ] Update backups for new config file locations
-    - [ ] Add progress bar for backup status
-    - [ ] Add backup history tracker log (with anticipation for internal safety backups)
+  - [x] Update backups for new config file locations
+    - [x] Add progress bar for backup status
+    - [x] Add backup history tracker log (with anticipation for internal safety backups)
   - [ ] Complete documentation for full server setup and binary build (double check behind Claude Code)
 - [ ] v0.1.0-aplha.4
   - [ ] Add unit tests
@@ -38,6 +38,7 @@ Have a "functional" web UI that can display the currently applied NixOS config (
   - [ ] Add systemctl service for running the nixmich binary
 - [ ] v0.1.0-beta.1
   - [ ] Update repo name and binary name (needs a better name and a better way to reference project/binary in documentation) <!--- nixmich: easy and relable photo storage applicance made with nixos and immich -->
+  - [ ] Change `tank/immich-config` to `tank/immich-compose`
   - [ ] Get some CSS ([immich-ui](https://ui.immich.app)) and make a usable mobile-first UI <!--- (logo assets; [nix logo](https://github.com/NixOS/nixos-artwork/tree/master/logo) + [immich colors](https://ui.immich.app/components/logo?)-->
   - [ ] Enhance the web UI to be more responsive by using HTMX and modals to minimize page reloads. Ensure this is implemented with progressive enhancement and graceful degradation for clients without JavaScript
   - [ ] Add an update button for the host system
