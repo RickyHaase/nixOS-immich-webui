@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"embed"
-	"fmt"
 	htmltemplate "html/template"
 	"log/slog"
 	"net/http"
@@ -63,9 +62,17 @@ func (h *BackupHandler) HandleGetDisks(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleBackup processes backup requests
+// HandleBackup processes backup requests (starts backup in background)
 func (h *BackupHandler) HandleBackup(w http.ResponseWriter, r *http.Request) {
 	slog.Info("Received Backup Request")
+
+	// Check if backup is already in progress
+	state := h.backupService.GetState()
+	if state.InProgress {
+		slog.Warn("| Backup already in progress |")
+		http.Error(w, "A backup is already in progress. Please wait for it to complete.", http.StatusConflict)
+		return
+	}
 
 	err := r.ParseForm()
 	if err != nil {
@@ -74,18 +81,19 @@ func (h *BackupHandler) HandleBackup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(r.FormValue("select-disk"))
+	selectedDisk := r.FormValue("select-disk")
+	verifyChecksum := r.FormValue("verify-backup") == "true"
+	slog.Debug("Selected disk", "disk", selectedDisk, "verify", verifyChecksum)
 
+	// Validate disk selection
 	disks, err := system.GetEligibleDisks()
 	if err != nil {
-		slog.Error("| Error getting eiligible disks |", "err", err)
-		http.Error(w, "Error getting eiligible disks", http.StatusInternalServerError)
+		slog.Error("| Error getting eligible disks |", "err", err)
+		http.Error(w, "Error getting eligible disks", http.StatusInternalServerError)
 		return
 	}
 
-	selectedDisk := r.FormValue("select-disk")
 	matchFound := false
-
 	for _, disk := range disks {
 		if disk.Identifier == selectedDisk {
 			matchFound = true
@@ -99,30 +107,49 @@ func (h *BackupHandler) HandleBackup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	backupResult, err := h.backupService.BackupToUSB(selectedDisk)
-	if err != nil {
-		slog.Error("| Error backing up to disk |", "err", err)
-		http.Error(w, "Error backing up to disk", http.StatusInternalServerError)
-		return
-	}
-	slog.Info(backupResult)
+	// Start backup in background goroutine
+	go func() {
+		slog.Info("Starting backup in background", "disk", selectedDisk, "verify", verifyChecksum)
+		_, err := h.backupService.BackupToUSB(selectedDisk, verifyChecksum)
+		if err != nil {
+			slog.Error("| Backup failed |", "err", err)
+		} else {
+			slog.Info("| Backup completed successfully |")
+		}
+	}()
 
-	tmpl, err := htmltemplate.ParseFS(h.templates, "web/backup_form.html")
-	if err != nil {
-		slog.Error("| Error parsing backup success template |", "err", err)
-		http.Error(w, "Backup completed but failed to render response", http.StatusInternalServerError)
-		return
-	}
+	// Return immediately with "backup started" message that triggers status polling
+	htmlResponse := `<div style="padding: 10px; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 4px; margin: 10px 0;"
+	                      hx-get="/backupstatus" hx-trigger="load delay:500ms" hx-target="#backup-status" hx-swap="innerHTML">
+		<strong>Backup Started!</strong><br>
+		The backup is now running in the background. Progress will be shown below.
+	</div>`
 
-	if err := tmpl.Execute(w, nil); err != nil {
-		slog.Error("| Error executing backup success template |", "err", err)
-		http.Error(w, "Backup completed but failed to render response", http.StatusInternalServerError)
-		return
-	}
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte(htmlResponse))
 }
 
-// HandleGetBackupStatus returns backup status information
+// HandleGetBackupStatus returns backup status information with current state
 func (h *BackupHandler) HandleGetBackupStatus(w http.ResponseWriter, r *http.Request) {
+	// Get current backup state
+	state := h.backupService.GetState()
+
+	// Get last backup from history
+	lastBackup, err := services.GetLastBackup()
+	if err != nil {
+		slog.Error("| Error getting last backup |", "err", err)
+		// Continue anyway, just won't show last backup info
+	}
+
+	// Prepare template data
+	data := struct {
+		State      services.BackupState
+		LastBackup *services.BackupHistoryEntry
+	}{
+		State:      state,
+		LastBackup: lastBackup,
+	}
+
 	tmpl, err := htmltemplate.ParseFS(h.templates, "web/backup_status.html")
 	if err != nil {
 		slog.Error("| Error parsing backup status template |", "err", err)
@@ -130,7 +157,7 @@ func (h *BackupHandler) HandleGetBackupStatus(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	if err := tmpl.Execute(w, nil); err != nil {
+	if err := tmpl.Execute(w, data); err != nil {
 		slog.Error("| Error executing backup status template |", "err", err)
 		http.Error(w, "Failed to render backup status", http.StatusInternalServerError)
 		return

@@ -33,7 +33,7 @@
   - Logging levels (Info, Error, Debug)
   - Basic USB backup (photos, config, DB dump)
 
-- **v0.1.0-alpha.3** (In Progress - ~90% Complete)
+- **v0.1.0-alpha.3** (Complete)
   - ✅ JSON-based configuration management (replaces .nix template parsing)
   - ✅ Refactored modular architecture with clean package separation
   - ✅ Automatic rollback on nixos-rebuild failure
@@ -41,8 +41,9 @@
   - ✅ Concurrency safety with mutex protection
   - ✅ ML model selection support for Immich
   - ✅ Build tag system (dev/prod modes)
-  - ⏳ Documentation updates for new features
-  - ⏳ Backup system updates for new config locations
+  - ✅ Complete backup system with progress tracking, history, and verification
+  - ✅ Event-driven HTMX polling for real-time status updates
+  - ✅ Organized backup structure (essential/supplemental folders)
 
 - **v0.1.0-beta.1** (Planned)
   - Mobile-first CSS/UI
@@ -289,12 +290,32 @@ GET  /backupstatus  # Backup operation status (HandleGetBackupStatus)
   - ML model selection with centralized validation
   - Uses template files instead of inline HTML
 - **BackupHandler**:
-  - USB backup operations
-  - Disk management
+  - USB backup operations with async execution
+  - Prevents concurrent backups by checking InProgress state
+  - Parses verification checkbox and passes to service
+  - Disk eligibility validation
+  - Real-time backup status endpoint (HandleGetBackupStatus)
   - Uses template fragments for dynamic content
 
 #### services package
-- **BackupService**: Business logic for backup operations
+- **BackupService**: Backup operations with thread-safe state management
+  - **State management**:
+    - `GetState()` - Thread-safe read of current backup state
+    - `setState()` - Update status, progress, and current step
+    - `setError()` - Handle error states
+    - `resetState()` - Return to idle state
+  - **Backup operations**:
+    - `BackupToUSB(disk, verifyChecksum)` - Complete async backup workflow
+    - `backupConfigs()` - Organized config/DB backup with essential/supplemental structure
+    - `backupLibrary(backupDir, verifyChecksum)` - Rsync with optional --checksum flag
+    - `unmountDisk()` - Safe disk unmounting
+  - **History tracking**:
+    - `LoadBackupHistory()` - Read JSON history file
+    - `SaveBackupHistory()` - Write with auto-pruning (keeps last 100)
+    - `AddBackupEntry()` - Append new backup record
+    - `GetLastBackup()` - Retrieve most recent backup
+  - **Progress parsing**: Extracts percentage and file counts from rsync --info=progress2 output
+  - **Data structures**: BackupState (with RWMutex), BackupHistoryEntry, BackupHistory
 
 #### system package
 - **NixOS management**: `ApplyChanges()` (nixos-rebuild switch), `RollbackConfigJSON()`
@@ -338,9 +359,10 @@ Path constants are now defined in separate files based on build tags:
 From `internal/config/paths_dev.go`:
 ```go
 const (
-    NixDir     = "test/nixos/"              // NixOS configuration directory
-    ImmichDir  = "test/tank/immich-config/" // Immich docker-compose directory
-    TankImmich = "test/tank/immich/"        // Immich config JSON location
+    NixDir            = "test/nixos/"               // NixOS configuration directory
+    ImmichDir         = "test/tank/immich-config/"  // Immich docker-compose directory
+    TankImmich        = "test/tank/immich/"         // Immich config JSON location
+    BackupHistoryFile = "test/backup-history.json"  // Backup history log file
 )
 ```
 
@@ -348,9 +370,10 @@ const (
 From `internal/config/paths_prod.go`:
 ```go
 const (
-    NixDir     = "/etc/nixos/"          // NixOS configuration directory
-    ImmichDir  = "/tank/immich-config/" // Immich docker-compose directory
-    TankImmich = "/tank/immich/"        // Immich config JSON location
+    NixDir            = "/etc/nixos/"           // NixOS configuration directory
+    ImmichDir         = "/tank/immich-config/"  // Immich docker-compose directory
+    TankImmich        = "/tank/immich/"         // Immich config JSON location
+    BackupHistoryFile = "./backup-history.json" // Backup history log file (alongside binary)
 )
 ```
 
@@ -382,18 +405,159 @@ const ConfigFile = "nixconfig.json"  // JSON configuration file name
 
 ## Backup System
 
-### USB Backup Features
-- **Eligibility**: USB drives with exFAT partitions
-- **Content**: Photos, system configs, database dumps, compose files
-- **Process**: Mount → Backup → Unmount automatically
-- **Format**: Configs zipped, photos synced with rsync
+The backup system provides comprehensive USB backup with real-time progress tracking, historical logging, and optional integrity verification.
 
-### Backup Contents
-1. Latest Immich database dump
-2. Current `immich-config.json`
-3. NixOS configuration directory
-4. Docker compose files
-5. Full photo library (rsync with --delete)
+### Core Features
+- **Async execution**: Non-blocking background goroutine allows UI to remain responsive
+- **Real-time progress**: Live percentage updates and "X / Y files" display via HTMX polling
+- **Smart polling**: Event-driven - only polls when backup is active, stops when idle
+- **Thread-safe state**: RWMutex-protected BackupState for concurrent access
+- **History tracking**: JSON-based log with automatic pruning (keeps last 100 entries)
+- **Checksum verification**: Optional `--checksum` flag for bit-for-bit integrity (slower)
+- **Organized structure**: Separates essential files from supplemental files
+- **Error handling**: Comprehensive error tracking with automatic history logging
+
+### USB Backup Workflow
+1. **Mount Disk**: Automatically mount USB drive (exFAT partitions only)
+2. **Config Backup (0-10%)**: Zip organized config files and DB dump
+3. **Library Backup (10-95%)**: Rsync photo library with optional verification
+4. **Unmount Disk (95-100%)**: Safe unmount after completion
+5. **History Update**: Record success/failure with metadata
+
+### Backup Organization
+Backups are organized into essential and supplemental folders for easier restoration:
+
+```
+immich-server-backup/
+├── config/
+│   └── config-2025-10-23.zip
+│       ├── essential/              # Critical for restore
+│       │   ├── nixconfig.json      # NixOS configuration (required)
+│       │   ├── immich-config.json  # Immich settings (required)
+│       │   └── *.sql.gz            # Database dump (required)
+│       ├── supplemental/           # Helpful but can be regenerated
+│       │   ├── nix-files/*.nix     # NixOS modules
+│       │   ├── docker-compose.yml  # Container config
+│       │   └── .env                # Environment variables
+│       └── readme.txt              # Restore instructions
+└── library/                        # Full photo library (rsync)
+```
+
+### Data Structures
+
+#### BackupState
+Tracks real-time backup operation state with mutex protection:
+```go
+type BackupState struct {
+    InProgress      bool      // Whether backup is currently running
+    Status          string    // Current status: "idle", "mounting", "configs", "library", "complete", "error"
+    CurrentStep     string    // Human-readable description of current step
+    ProgressPercent int       // Overall progress percentage (0-100)
+    TotalFiles      int64     // Total files to process (from rsync)
+    ProcessedFiles  int64     // Files processed so far (from rsync)
+    CurrentFile     string    // Current file being processed
+    StartTime       time.Time // When backup started
+    ErrorMessage    string    // Error details if status is "error"
+    VerifyChecksum  bool      // Whether checksum verification is enabled
+}
+```
+
+#### BackupHistoryEntry
+Records completed backup operations:
+```go
+type BackupHistoryEntry struct {
+    Timestamp        time.Time // When backup occurred
+    Status           string    // "success" or "failed"
+    DurationSec      int       // Total backup duration in seconds
+    FilesBackedUp    int64     // Number of files backed up
+    TotalSizeMB      int64     // Total size in megabytes
+    DiskUsed         string    // Disk identifier (e.g., "sda1")
+    BackupType       string    // "usb" (future: "internal", "safety")
+    ErrorMessage     string    // Error details if failed
+    VerifiedChecksum bool      // Whether checksums were verified
+}
+```
+
+### Checksum Verification
+Optional verification ensures bit-for-bit integrity using rsync's `--checksum` flag:
+
+**Without verification (default)**:
+- Rsync compares files by size and modification time
+- Fast - suitable for regular backups
+- Command: `rsync -a --info=progress2 --delete /tank/immich/library <dest>`
+
+**With verification (checkbox enabled)**:
+- Rsync compares files by MD5 checksum
+- Slower - reads all files on both source and destination
+- Ensures perfect integrity - detects any corruption
+- Command: `rsync -a --info=progress2 --checksum --delete /tank/immich/library <dest>`
+- UI shows: "Backing up photo library (with checksum verification)"
+
+### Progress Tracking
+The system parses rsync's `--info=progress2` output in real-time:
+
+**Percentage extraction**:
+```
+    123,456,789  45%  123.45MB/s    0:12:34 (xfr#123, to-chk=456/789)
+                 ^^
+    Extracted and mapped to 10-95% range (10% reserved for config backup)
+```
+
+**File count extraction**:
+```
+    to-chk=456/789
+           ^^^  ^^^
+    remaining  total
+
+    Processed = total - remaining = 789 - 456 = 333 files
+```
+
+### HTMX Polling Pattern
+The UI uses event-driven polling controlled by server responses:
+
+**When backup starts**:
+- Response includes `hx-trigger="load delay:500ms"` to initiate first status check
+
+**While backup is in progress**:
+- Template includes `hx-trigger="every 2s"` → polls every 2 seconds
+- Shows live progress bar and file counts
+
+**When backup completes**:
+- Template includes `hx-trigger="after 3s"` → refreshes once after 3 seconds
+- Shows success message briefly
+
+**When backup is idle**:
+- Template has NO `hx-trigger` → no polling
+- Shows last backup information (if available)
+
+This pattern ensures minimal server load - polling only happens when necessary.
+
+### Backup Eligibility
+USB disks must meet these criteria:
+- Connected via USB (detected by system)
+- Contains exFAT partition (cross-platform compatibility)
+- Successfully mountable via udisksctl
+
+### History Management
+- **Storage**: JSON file at `BackupHistoryFile` path (alongside binary in production)
+- **Auto-pruning**: Automatically keeps only last 100 entries
+- **Thread-safe**: All history operations use file I/O (no shared state)
+- **Format**: Human-readable JSON with proper indentation
+
+### Error Handling
+All errors are:
+1. Logged with structured logging (slog)
+2. Recorded in backup history with timestamp
+3. Displayed to user via error state in UI
+4. Include specific step where failure occurred
+
+### Future Enhancements
+Planned for future versions:
+- Internal backup failsafe (config → data disk, photos → boot disk)
+- Scheduled automatic backups (timer/cron integration)
+- Email notifications on completion/failure
+- Syncthing integration for continuous replication to remote systems
+- Restoration wizard with guided recovery process
 
 ## Common Patterns and Conventions
 
@@ -463,6 +627,7 @@ http.Redirect(w, r, "/", http.StatusSeeOther)
 - ✅ JSON configuration management (completed in alpha.3)
 - ✅ Modular package architecture (completed in alpha.3)
 - ✅ Input validation framework (completed in alpha.3)
+- ✅ Complete backup system with progress tracking and verification (completed in alpha.3)
 - Add unit tests
 - Internal backup failsafe (backup server config to data disk, photos to boot disk)
 - Configuration sanitization (validation complete, sanitization pending)
@@ -491,9 +656,11 @@ http.Redirect(w, r, "/", http.StatusSeeOther)
 - Host system update button
 - GitHub binary releases
 - Full Immich API integration
-- Advanced backup scheduling with HTMX progress tracking
+- Advanced backup scheduling (foundation complete - add cron/timer)
+- Syncthing integration for continuous backup replication
 - Multiple remote access methods
 - Setup/installation automation
+- Restoration wizard
 
 ## HTMX Development Guidelines
 
