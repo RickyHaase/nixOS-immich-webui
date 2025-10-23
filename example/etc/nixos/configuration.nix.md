@@ -20,7 +20,7 @@ In your `/etc/nixos/configuration.nix` file, add the following imports to the `i
     ./admin.nix
     ./networking.nix
     ./immich.nix
-    # ./remoteaccess.nix
+    ./remoteaccess.nix
   ];
 }
 ```

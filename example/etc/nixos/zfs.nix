@@ -13,20 +13,20 @@ in
 
   services.zfs.autoScrub.enable = true;
 
-  services.sanoid.enable = true;
-  services.sanoid  = {
-    interval = "hourly";
-    datasets = {
-      "tank" = {
-        recursive = true;
-        autoprune = true;
-        autosnap = true;
-        hourly = 24;
-        daily = 7;
-        weekly = 1;
-        monthly = 0;
-        yearly = 0;
-      };
-    };
-  };
+  # services.sanoid.enable = true;
+  # services.sanoid  = {
+  #   interval = "hourly";
+  #   datasets = {
+  #     "tank" = {
+  #       recursive = true;
+  #       autoprune = true;
+  #       autosnap = true;
+  #       hourly = 24;
+  #       daily = 7;
+  #       weekly = 1;
+  #       monthly = 0;
+  #       yearly = 0;
+  #     };
+  #   };
+  # };
 }
