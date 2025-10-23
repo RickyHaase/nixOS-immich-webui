@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 let
   # Read JSON variables using builtins.fromJSON
@@ -12,8 +12,8 @@ in
   # Tailscale VPN service from JSON configuration
   services.tailscale.enable = vars.remoteAccess.tailscale.enable;
 
-  # create a oneshot job to authenticate to Tailscale
-  systemd.services.tailscale-autoconnect = {
+  # create a oneshot job to authenticate to Tailscale if TS service is enabled
+  systemd.services.tailscale-autoconnect = lib.mkIf vars.remoteAccess.tailscale.enable {
     description = "Automatic connection to Tailscale";
 
     # make sure tailscale is running before trying to connect to tailscale

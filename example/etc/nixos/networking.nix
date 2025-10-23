@@ -3,9 +3,9 @@
 let
   # Read JSON variables using builtins.fromJSON (consistent pattern)
   vars = builtins.fromJSON (builtins.readFile ./nixconfig.json);
-  
+
   # Static configuration values (not currently templated)
-  hostName = "immich-dev-vm";
+  hostName = "immich";
 in
 {
   networking.hostName = hostName;
@@ -42,10 +42,10 @@ in
   # Caddy (reverse proxy)
   services.caddy.enable = true;
   services.caddy = {
-    virtualHosts."${hostName}.local:80".extraConfig = ''
+    virtualHosts."http://${hostName}.local:80".extraConfig = ''
       reverse_proxy http://localhost:2283
     '';
-    virtualHosts.":8080".extraConfig = ''
+    virtualHosts."http://${hostName}.local:8080".extraConfig = ''
       reverse_proxy http://localhost:8000
     '';
   };

@@ -26,6 +26,7 @@
 !docs/dev/*.md
 !docs/setup/*.md
 !docs/admin/*.md
+!docs/claude/*.md
 
 !internal/templates/web/*.html
 internal/templates/web/backup_config.html
@@ -34,9 +35,11 @@ internal/templates/web/backup_dashboard.html
 
 !test/nixos/nixconfig.json
 !test/tank/immich/immich-config.json
+!test/tank/immich-compose/*
 
 !example/etc/nixos/*
-!example/tank/immich-config/*
+!example/tank/immich/*
+!example/tank/immich-compose/*
 
 
 # ...even if they are in subdirectories

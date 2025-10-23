@@ -33,18 +33,27 @@ in
     zip  # Required for backup functionality
   ];
 
-  # #Systemd service for go app stored in /root
-      # systemd.services.webui = {
-      #     description = "NixOS-Immich WebUI Service";
-      #     after = [ "network.target" ];
-      #     wantedBy = [ "multi-user.target" ];
-      #     serviceConfig = {
-      #         ExecStart = "/root/ezimmich";
-      #         Restart = "always";
-      #         User = "root";
-      #         WorkingDirectory = "/root";
-      #         StandardOutput = "journal";
-      #         StandardError = "journal";
-      #     };
-      # };
+  # Completely disable suspend/hibernate at the systemd level
+  systemd.targets.sleep.enable = false;
+  systemd.targets.suspend.enable = false;
+  systemd.targets.hibernate.enable = false;
+  systemd.targets.hybrid-sleep.enable = false;
+
+  # Systemd service for go app stored in /root
+  systemd.services.nixmich = {
+    description = "nixmich web UI";
+    after = [ "network.target" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      ExecStart = pkgs.writeShellScript "nixmich-start" ''
+        source /etc/profile
+        exec /root/nixmich-prod/nixmich
+      '';
+      Restart = "always";
+      User = "root";
+      WorkingDirectory = "/root/nixmich-prod";
+      StandardOutput = "journal";
+      StandardError = "journal";
+    };
+  };
 }

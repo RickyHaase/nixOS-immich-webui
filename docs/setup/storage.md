@@ -21,11 +21,11 @@
   ```
   zfs create \
     -o recordsize=8K \
-    -o logbias=latency \
     -o compression=lz4 \
     -o atime=off \
     -o relatime=on \
     -o sync=standard \
+    -o prefetch=metadata \
     tank/pgdata
   ```
 6. Create Immich datasets
@@ -42,7 +42,7 @@
 7. Create config datasets
 ```
 zfs create -o compression=lz4 -o copies=2 tank/config-backups
-zfs create -o compression=lz4 -o copies=2 tank/immich-config
+zfs create -o compression=lz4 -o copies=2 tank/immich-compose
 ```
 
 ## Future Considerations

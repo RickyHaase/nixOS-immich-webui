@@ -28,7 +28,7 @@ func NewBackupHandler(templates embed.FS, backupService *services.BackupService)
 func (h *BackupHandler) HandleGetDisks(w http.ResponseWriter, r *http.Request) {
 	disks, err := system.GetEligibleDisks()
 	if err != nil {
-		slog.Error("Error getting eiligible disks", "err", err)
+		slog.Error("Error getting eligible disks", "err", err)
 	}
 
 	if len(disks) == 0 {

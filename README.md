@@ -31,8 +31,11 @@ Have a "functional" web UI that can display the currently applied NixOS config (
   - [x] Update backups for new config file locations
     - [x] Add progress bar for backup status
     - [x] Add backup history tracker log (with anticipation for internal safety backups)
-  - [ ] Complete documentation for full server setup and binary build (double check behind Claude Code)
+  - [x] Complete documentation for full server setup and binary build (double check behind Claude Code)
+  - [x] Add systemd service to system.nix for nixmich binary
+  - [ ] Add cloudflared.nix and UI for configuring
 - [ ] v0.1.0-aplha.4
+  - [ ] Small UI refresh with loading/progress bars and such to make it minimally usable
   - [ ] Add unit tests
   - [ ] Add GitHub binary releases
   - [ ] Add systemctl service for running the nixmich binary
