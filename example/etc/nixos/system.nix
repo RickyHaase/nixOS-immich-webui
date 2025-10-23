@@ -33,6 +33,12 @@ in
     zip  # Required for backup functionality
   ];
 
+  # Completely disable suspend/hibernate at the systemd level
+  systemd.targets.sleep.enable = false;
+  systemd.targets.suspend.enable = false;
+  systemd.targets.hibernate.enable = false;
+  systemd.targets.hybrid-sleep.enable = false;
+
   # Systemd service for go app stored in /root
   systemd.services.nixmich = {
     description = "nixmich web UI";

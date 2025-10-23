@@ -84,7 +84,47 @@ There will also be a full [Google ODIC/Cloudflare Tunnel guide](./google+cloudfl
   - enable auto-updates (ensure nixos-rebuild functions)
   - enable tailscale with valid authkey
   - add gmail as SMTP server for immich notifications
-10. go to http://immich.local to setup immich admin account and add users
+10. go to http://immich.local to setup immich admin account
+  - tested email notifications
 11. configure remote access via the [google + cloudflare](./google+cloudflare.md) doc
+  - this requires some dev and will be completed tonight (hopefully)
 
 NOTE: I also had to disable "automatic suspend" in the gnome settings page... not sure if this would actually cause any issues but I have disabled it just in case.
+
+Settings page did not persist reboot. If including Gnome DE, it is recommended to include the below in the configuration.nix file (along with lib in the config, pkgs, ... at the top). That said, I disabled in system.nix via another method since so it may not be required.
+
+```
+  # Set GNOME power settings via dconf (applies system-wide, including GDM)
+  programs.dconf.profiles.gdm.databases = [{
+    settings = {
+      "org/gnome/settings-daemon/plugins/power" = {
+        sleep-inactive-ac-type = "nothing";
+        sleep-inactive-battery-type = "nothing";
+        sleep-inactive-ac-timeout = lib.gvariant.mkUint32 0;
+        sleep-inactive-battery-timeout = lib.gvariant.mkUint32 0;
+      };
+    };
+  }];
+
+  # Also set defaults for user sessions
+  programs.dconf.profiles.user.databases = [{
+    settings = {
+      "org/gnome/settings-daemon/plugins/power" = {
+        sleep-inactive-ac-type = "nothing";
+        sleep-inactive-battery-type = "nothing";
+        sleep-inactive-ac-timeout = lib.gvariant.mkUint32 0;
+        sleep-inactive-battery-timeout = lib.gvariant.mkUint32 0;
+      };
+      "org/gnome/desktop/session" = {
+        idle-delay = lib.gvariant.mkUint32 0;
+      };
+    };
+  }];
+```
+
+## Binary update
+1. pull whatever branch/tag/whatever you want to update to from github
+2. build the binary
+3. stop systemd service `systemctl stop nixmich`
+4. replace the binary  `/root/nixmich-prod/nixmich` with a new one (same name, same location)
+5. start the systemd service `systemct start nixmich`
