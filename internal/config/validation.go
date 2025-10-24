@@ -64,6 +64,28 @@ func ValidateTailscaleAuthKey(key string) error {
 	return nil
 }
 
+// ValidateCloudflaredToken checks if the given Cloudflare tunnel token has valid format
+func ValidateCloudflaredToken(token string) error {
+	slog.Debug("ValidateCloudflaredToken()", "tokenLength", len(token))
+
+	// Empty token is allowed (Cloudflared disabled)
+	if token == "" {
+		return nil
+	}
+
+	// Cloudflare tunnel tokens are JWTs that start with "eyJ"
+	if !strings.HasPrefix(token, "eyJ") {
+		return fmt.Errorf("invalid Cloudflare tunnel token format: must start with 'eyJ'")
+	}
+
+	// Check minimum length (JWT tokens are typically quite long)
+	if len(token) < 100 {
+		return fmt.Errorf("invalid Cloudflare tunnel token: too short")
+	}
+
+	return nil
+}
+
 // ValidateEmail checks if the given email address has a valid format
 func ValidateEmail(email string) error {
 	slog.Debug("ValidateEmail()", "email", email)

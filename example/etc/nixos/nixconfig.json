@@ -10,6 +10,10 @@
     "tailscale": {
       "enable": false,
       "authKey": "tskey-auth-placeholder"
+    },
+    "cloudflared": {
+      "enable": false,
+      "token": ""
     }
   }
 }

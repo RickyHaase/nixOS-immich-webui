@@ -20,6 +20,9 @@
             const tailscale = document.getElementById('tailscale').value;
             const tailscaleAuthkey = document.getElementById('tailscale-authkey');
             const tailscaleAuthkeyLabel = document.querySelector('label[for="tailscale-authkey"]');
+            const cloudflared = document.getElementById('cloudflared').value;
+            const cloudflaredToken = document.getElementById('cloudflared-token');
+            const cloudflaredTokenLabel = document.querySelector('label[for="cloudflared-token"]');
 
             if (autoUpdates === 'true') {
                 updateTime.classList.remove('hidden');
@@ -36,10 +39,19 @@
                 tailscaleAuthkey.classList.add('hidden');
                 tailscaleAuthkeyLabel.classList.add('hidden');
             }
+
+            if (cloudflared === 'true') {
+                cloudflaredToken.classList.remove('hidden');
+                cloudflaredTokenLabel.classList.remove('hidden');
+            } else {
+                cloudflaredToken.classList.add('hidden');
+                cloudflaredTokenLabel.classList.add('hidden');
+            }
         }
 
         document.getElementById('auto-updates').addEventListener('change', toggleFields);
         document.getElementById('tailscale').addEventListener('change', toggleFields);
+        document.getElementById('cloudflared').addEventListener('change', toggleFields);
 
         toggleFields();
     });
@@ -90,6 +102,17 @@
         <!-- Button to enable tailscale serve for localhost:2283 -->
         <!-- Button to enable tailscale funnel? What about Admin Panel? -->
         <!-- Need to add ability to sign out Tailscale -->
+        <br><br>
+        <!-- Enable Cloudflare Tunnel -->
+        <label for="cloudflared">Cloudflare Tunnel:</label>
+        <select name="cloudflared" id="cloudflared">
+            <option value="true" {{if .Cloudflared}}selected{{end}}>Enabled</option>
+            <option value="false" {{if not .Cloudflared}}selected{{end}}>Disabled</option>
+        </select>
+        <!-- Enter Cloudflare Tunnel Token -->
+        <label for="cloudflared-token">Tunnel Token:</label>
+        <input type="text" id="cloudflared-token" name="cloudflared-token" value="{{.CloudflaredToken}}" placeholder="eyJhIjoiXXXXXXXXXX...">
+        <br><small>Create tunnel in Cloudflare Zero Trust dashboard, route to http://localhost:2283, then paste token here.</small>
 
         <!-- Eventually will add a form to configure the Caddy basic auth password for the admin panel -->
         <!-- <h2>Admin Pannel Security</h2>
@@ -114,6 +137,8 @@
         <button type="submit" hx-post="/email" hx-target="#email-form">Submit</button>
         <br><small>Use your gmail account with an <a href="https://support.google.com/mail/answer/185833">app password</a> to allow for immich to send emails.</small>
     </form>
+
+    <br>
 
     <form id="ml-form" action="/mlmodel" method="post">
         <label for="ml-model">CLIP Model:</label>
