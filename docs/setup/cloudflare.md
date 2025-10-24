@@ -12,7 +12,9 @@ in local endpoint, it will be http://localhost:2283
 
 NOTE: we will be using a SaaS app to protect the tunnel (kinda) via OAuth rather than a self-hosted app... I may look into seeing if the auth can be passed through on both to protect all routes but I doubt anything will come of it
 
-BOT PRotection
+BOT PRotection at domain level
+
+ADD GeoIP block via self-hosted app in ZeroTrust (if sharing is unneeded, you could also add a login here and might be able to get it to pass through the token to OAuth... this is probably the best way and I'll have to look into that + immich share proxy as a good way to really lock things down)
 
 ## OAuth
 more details to come. for now: https://github.com/immich-app/immich/discussions/8299

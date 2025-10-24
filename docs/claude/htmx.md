@@ -144,10 +144,17 @@ Best-practice checklist for contributors
 References & files to inspect
 ----------------------------
 - HTMX docs: https://htmx.org/
+- Main pages:
+  - `internal/templates/web/index.html` (home/backup/system dashboard)
+  - `internal/templates/web/config.html` (configuration page)
 - Templates used for HTMX fragments:
   - `internal/templates/web/backup_status.html`
   - `internal/templates/web/backup_dashboard.html`
   - `internal/templates/web/email_form.html`
+  - `internal/templates/web/ml_form.html`
+  - `internal/templates/web/oauth_form.html`
+  - `internal/templates/web/save.html`
+  - `internal/templates/web/apply_success.html`
 - Handlers:
   - `internal/handlers/backup.go`
   - `internal/handlers/immich.go`

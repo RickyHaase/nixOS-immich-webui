@@ -5,8 +5,10 @@ This document summarizes the current security posture, immediate mitigations, re
 This project context (short)
 - The server binary binds to `localhost:8000` by default and is commonly fronted by `Caddy` (reverse proxy) for external access.
 - It performs privileged operations on the host (apply NixOS configurations, mount/unmount disks, perform DB dumps, control containers, poweroff/reboot).
-- In current alpha state the admin UI is unauthenticated; the service typically runs as root to perform system-level operations.
+- OAuth authentication is implemented for Immich (via Cloudflare integration); the admin UI itself remains unauthenticated in alpha.3.
+- Cloudflare Tunnel support is available for secure remote access.
 - Frontend uses server-side HTML rendering and HTMX for progressive enhancement.
+- Security enhancements: token/authkey obfuscation in forms after submission.
 
 High-level security goals
 - Minimize attack surface exposed to networks.
@@ -27,9 +29,13 @@ Immediate mitigations (high-impact, low-effort)
 6. Add structured logging and monitor logs (success/fail events for `nixos-rebuild`, backups, mounts).
 
 Authentication & access control
-- Short-term: Protect the UI with reverse-proxy auth (basic auth or OIDC). This is faster to roll out.
-- Medium-term: Implement strong authentication inside the app (or via proxy):
-  - OIDC integration (Cloudflare Tunnel, Auth0, Keycloak) or Tailscale ACLs for admin access.
+- Current state (alpha.3):
+  - OAuth authentication is implemented for Immich via Cloudflare integration (client ID, client secret, issuer URL, public domain).
+  - Password login can be disabled when OAuth is enabled for stronger security.
+  - Admin UI itself is still unauthenticated; protect with reverse-proxy auth (see below).
+- Short-term: Protect the admin UI with reverse-proxy auth (basic auth or OIDC). This is faster to roll out.
+- Medium-term: Extend authentication inside the app:
+  - OIDC integration for the admin UI itself, or Tailscale ACLs for admin access.
   - Support admin users and role-based access for potentially multi-admin environments.
 - Principle of least privilege:
   - Limit what the web service account (if not root) can execute via a minimal set of allowed sudoers commands or systemd units.
@@ -52,7 +58,10 @@ Reverse proxy / TLS
 
 Transport & network-level protections
 - Use local-only binding for the binary; rely on the reverse proxy for public exposure.
-- If remote admin access is required, prefer VPN/tunnel (Tailscale) or Cloudflare Tunnel + OIDC — avoid exposing the admin UI directly to the open internet.
+- Remote access options (implemented):
+  - Cloudflare Tunnel: configure via the web UI; routes to localhost:2283 (Immich).
+  - Tailscale: currently enables SSH access over the tailnet; can be extended for admin UI access.
+- Avoid exposing the admin UI directly to the open internet without authentication.
 - Configure firewall rules (nftables/iptables) to restrict inbound connections to necessary ports.
 
 Secrets management
@@ -61,6 +70,7 @@ Secrets management
   - Use NixOS secrets management, systemd `EnvironmentFile`, or a secrets manager.
   - For deployment on NixOS: use declarative secrets with restricted file permissions and populate at runtime.
   - When using Caddy, store hashed passwords and use secret stores where supported.
+- UI security: tokens and authkeys are obfuscated in form inputs after submission (show placeholder text instead of actual values).
 - Rotate keys and credentials regularly and revoke ones that are leaked or unused.
 
 Privilege separation and runtime user
@@ -152,7 +162,7 @@ References & where to change code
 - Authentication / proxy examples: `docs/claude/security.md` (this file) and proxy configs in your deployment artifacts.
 - Privileged helpers and system operations: `internal/system/commands.go`
 - Config & path constants: `internal/config/paths_prod.go`, `internal/config/paths_dev.go`
-- Templates (XSS surface): `internal/templates/web/*.html`
+- Templates (XSS surface): `internal/templates/web/*.html` — notably `index.html`, `config.html`, `oauth_form.html`, `email_form.html`, `ml_form.html`, `save.html`
 - Backup orchestration: `internal/services/backup.go`, `internal/handlers/backup.go`
 
 Notes and trade-offs

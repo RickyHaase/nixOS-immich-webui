@@ -4,7 +4,7 @@ This doc is a full step-by-step walkthrough of my first deployment and setup (fr
 
 Once in beta with pre-built binaries and a proper setup script then I'll update the ture deployment.md with "official" setup instructions. In the meantime, this will serve as the complete working deployment guide for testing.
 
-There will also be a full [Google ODIC/Cloudflare Tunnel guide](./google+cloudflare) created as part of this setup process (manual - no web UI (yet))
+There will also be a full [Cloudflare Tunnel + OAuth guide](./cloudflare.md) created as part of this setup process (manual - no web UI (yet))
 
 ## Step-by-step
 
@@ -86,41 +86,10 @@ There will also be a full [Google ODIC/Cloudflare Tunnel guide](./google+cloudfl
   - add gmail as SMTP server for immich notifications
 10. go to http://immich.local to setup immich admin account
   - tested email notifications
-11. configure remote access via the [google + cloudflare](./google+cloudflare.md) doc
+11. configure remote access via the [cloudflare](./cloudflare.md) doc
   - this requires some dev and will be completed tonight (hopefully)
 
-NOTE: I also had to disable "automatic suspend" in the gnome settings page... not sure if this would actually cause any issues but I have disabled it just in case.
-
-Settings page did not persist reboot. If including Gnome DE, it is recommended to include the below in the configuration.nix file (along with lib in the config, pkgs, ... at the top). That said, I disabled in system.nix via another method since so it may not be required.
-
-```
-  # Set GNOME power settings via dconf (applies system-wide, including GDM)
-  programs.dconf.profiles.gdm.databases = [{
-    settings = {
-      "org/gnome/settings-daemon/plugins/power" = {
-        sleep-inactive-ac-type = "nothing";
-        sleep-inactive-battery-type = "nothing";
-        sleep-inactive-ac-timeout = lib.gvariant.mkUint32 0;
-        sleep-inactive-battery-timeout = lib.gvariant.mkUint32 0;
-      };
-    };
-  }];
-
-  # Also set defaults for user sessions
-  programs.dconf.profiles.user.databases = [{
-    settings = {
-      "org/gnome/settings-daemon/plugins/power" = {
-        sleep-inactive-ac-type = "nothing";
-        sleep-inactive-battery-type = "nothing";
-        sleep-inactive-ac-timeout = lib.gvariant.mkUint32 0;
-        sleep-inactive-battery-timeout = lib.gvariant.mkUint32 0;
-      };
-      "org/gnome/desktop/session" = {
-        idle-delay = lib.gvariant.mkUint32 0;
-      };
-    };
-  }];
-```
+NOTE: There was too much unexpected behavior when Gnome was enabled so I disabled it... it's simple-enough to re-enable if needing to move files around or something
 
 ## Binary update
 1. pull whatever branch/tag/whatever you want to update to from github

@@ -50,7 +50,8 @@ Below are the main `internal/` packages and their responsibilities.
   - Key responsibilities:
     - Load/save `nixconfig.json` and `immich-config.json`.
     - Provide thread-safe getters/setters for active configuration.
-    - Validate inputs (timezone, time format, email, Tailscale auth keys).
+    - Validate inputs (timezone, time format, email, Tailscale auth keys, OAuth credentials).
+    - Handle OAuth configuration (client ID, client secret, issuer URL, public domain, password login settings).
     - Expose helper functions for ML model validation and display names.
     - Path separation for dev vs. prod via `paths_dev.go` and `paths_prod.go`.
     - Atomic switching and rollback helpers (`SwitchConfigJSON`, `RollbackConfigJSON`).
@@ -85,8 +86,10 @@ Below are the main `internal/` packages and their responsibilities.
   - Purpose: HTML templates embedded into the binary.
   - Key responsibilities:
     - Organize templates into full pages and HTMX fragments.
-    - Provide small reusable partials (status panels, forms, progress fragments).
+    - Two main pages: `index.html` (home/backup/system dashboard) and `config.html` (configuration management).
+    - Provide small reusable partials (status panels, forms, progress fragments, OAuth form).
   - Where to change: UI text, fragments used for HTMX partial updates.
+  - Key templates: `backup_status.html`, `backup_dashboard.html`, `email_form.html`, `ml_form.html`, `oauth_form.html`, `apply_success.html`, `save.html`.
 
 Build modes and paths
 - Two build modes are supported via Go build tags:

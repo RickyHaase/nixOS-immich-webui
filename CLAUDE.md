@@ -4,6 +4,8 @@ Purpose
 -------
 `nixOS-immich-webui` is a small Go-based appliance UI that helps you manage a NixOS host running Immich (self-hosted photo/video backup). The binary serves a progressive-enhancement web UI, backup tooling, and a small set of system-management utilities. This file is a concise, high-level entrypoint — detailed technical docs live under `docs/claude/`.
 
+Current status: **v0.1.0-alpha.3 complete**
+
 Quick start (developer)
 -----------------------
 - Run in safe development mode (uses `test/` fixtures):
@@ -24,7 +26,9 @@ High-level features
 - Immich container lifecycle controls (start/stop/update)
 - USB backup workflow (configs + photo library) with progress & history
 - Progressive-enhancement UI (works without JavaScript; HTMX for UX)
-- Tailscale integration and planned auth/security improvements
+- Two-page UI: home/dashboard (backup & system controls) and configuration
+- OAuth authentication support (Cloudflare integration)
+- Cloudflare Tunnel and Tailscale integration for remote access
 
 Where to find things
 --------------------

@@ -23,7 +23,7 @@ Have a "functional" web UI that can display the currently applied NixOS config (
   - [x] Make sure that error handling is actually working as expected (unit testing not yet setup)
   - [x] Configured Logging levels (Info, Error, and Debug) - currently requires hard-coded switch
   - [x] Basic USB-drive backup (a restoration option will NOT be included in this release (all photos, the config files, and the latest DB Dump will be copied)). See [backups.md](/docs/dev/backups.md)
-- [ ] v0.1.0-alpha.3
+- [x] v0.1.0-alpha.3
   - [x] **Claude Coded** Re-organize documentation and create CLAUDE.md for repo
   - [x] **Claude Coded** Refactor single main.go into seperate modules for better organization and easier maintainability
   - [x] Rebuild nix config files and replace the parsing/updating system with JSON
@@ -36,12 +36,12 @@ Have a "functional" web UI that can display the currently applied NixOS config (
   - [x] Add cloudflared (remoteaccess.nix) along with UI for configuring
   - [x] Add OAuth support (immich-config.json) along with UI for configuring
 - [ ] v0.1.0-aplha.4
-  - [ ] Small UI refresh with loading/progress bars and such to make it minimally usable
+  - [x] Small UI refresh with loading/progress bars and such to make it minimally usable
   - [ ] Add unit tests
   - [ ] Add GitHub binary releases
   - [ ] Add systemctl service for running the nixmich binary
 - [ ] v0.1.0-beta.1
-  - [ ] Update repo name and binary name (needs a better name and a better way to reference project/binary in documentation) <!--- nixmich: easy and relable photo storage applicance made with nixos and immich -->
+  - [ ] Update repo name and binary name ("nixmich" to reference project/binary in documentation) <!--- nixmich: easy and relable photo storage applicance made with nixos and immich -->
   - [ ] Change `tank/immich-config` to `tank/immich-compose`
   - [ ] Get some CSS ([immich-ui](https://ui.immich.app)) and make a usable mobile-first UI <!--- (logo assets; [nix logo](https://github.com/NixOS/nixos-artwork/tree/master/logo) + [immich colors](https://ui.immich.app/components/logo?)-->
   - [ ] Enhance the web UI to be more responsive by using HTMX and modals to minimize page reloads. Ensure this is implemented with progressive enhancement and graceful degradation for clients without JavaScript
