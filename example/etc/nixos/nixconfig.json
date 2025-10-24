@@ -9,7 +9,7 @@
   "remoteAccess": {
     "tailscale": {
       "enable": false,
-      "authKey": "tskey-auth-placeholder"
+      "authKey": ""
     },
     "cloudflared": {
       "enable": false,
