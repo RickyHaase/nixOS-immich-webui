@@ -15,6 +15,10 @@ type ConfigVariables struct {
 			Enable  bool   `json:"enable"`
 			AuthKey string `json:"authKey"`
 		} `json:"tailscale"`
+		Cloudflared struct {
+			Enable bool   `json:"enable"`
+			Token  string `json:"token"`
+		} `json:"cloudflared"`
 	} `json:"remoteAccess"`
 }
 
@@ -26,9 +30,11 @@ type NixConfig struct {
 	UpgradeTime  string // start of 1-hour window, interruption should be minimal during that window
 	UpgradeLower string // value derived from UpgradeTime+30min
 	UpgradeUpper string // value derived from UpgradeTime+60min
-	Tailscale    bool
-	TSAuthkey    string
-	Email        string
+	Tailscale        bool
+	TSAuthkey        string
+	Cloudflared      bool
+	CloudflaredToken string
+	Email            string
 	EmailPass    bool
 	MLModel      string
 }
@@ -41,9 +47,11 @@ func (cv *ConfigVariables) ToNixConfig() *NixConfig {
 		UpgradeTime:  cv.System.UpgradeTime,
 		UpgradeLower: cv.System.UpgradeLower,
 		UpgradeUpper: cv.System.UpgradeUpper,
-		Tailscale:    cv.RemoteAccess.Tailscale.Enable,
-		TSAuthkey:    cv.RemoteAccess.Tailscale.AuthKey,
-		Email:        "",
+		Tailscale:        cv.RemoteAccess.Tailscale.Enable,
+		TSAuthkey:        cv.RemoteAccess.Tailscale.AuthKey,
+		Cloudflared:      cv.RemoteAccess.Cloudflared.Enable,
+		CloudflaredToken: cv.RemoteAccess.Cloudflared.Token,
+		Email:            "",
 		EmailPass:    false,
 	}
 

@@ -69,6 +69,8 @@ func (h *SystemHandler) HandleSave(w http.ResponseWriter, r *http.Request) {
 	updateTime := r.FormValue("update-time")
 	tailscaleAuthKey := r.FormValue("tailscale-authkey")
 	tailscaleEnabled := config.ParseBool(r.FormValue("tailscale"))
+	cloudflaredToken := r.FormValue("cloudflared-token")
+	cloudflaredEnabled := config.ParseBool(r.FormValue("cloudflared"))
 
 	// Validate inputs
 	if err := config.ValidateTimezone(timezone); err != nil {
@@ -92,6 +94,15 @@ func (h *SystemHandler) HandleSave(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Only validate Cloudflared token if Cloudflared is enabled
+	if cloudflaredEnabled {
+		if err := config.ValidateCloudflaredToken(cloudflaredToken); err != nil {
+			slog.Error("| Invalid Cloudflare tunnel token |", "err", err)
+			http.Error(w, fmt.Sprintf("Validation error: %v", err), http.StatusBadRequest)
+			return
+		}
+	}
+
 	// Build new JSON configuration structure
 	cfgJSON := &config.ConfigVariables{}
 	cfgJSON.System.TimeZone = timezone
@@ -99,6 +110,8 @@ func (h *SystemHandler) HandleSave(w http.ResponseWriter, r *http.Request) {
 	cfgJSON.System.UpgradeTime = updateTime
 	cfgJSON.RemoteAccess.Tailscale.Enable = tailscaleEnabled
 	cfgJSON.RemoteAccess.Tailscale.AuthKey = tailscaleAuthKey
+	cfgJSON.RemoteAccess.Cloudflared.Enable = cloudflaredEnabled
+	cfgJSON.RemoteAccess.Cloudflared.Token = cloudflaredToken
 
 	t1, t2, err := config.GetLowerUpper(cfgJSON.System.UpgradeTime)
 	if err != nil {

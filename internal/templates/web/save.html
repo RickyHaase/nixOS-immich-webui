@@ -29,6 +29,14 @@
             <td style="border: 1px solid;">TS Authkey</td>
             <td style="border: 1px solid;">{{.TSAuthkey}}</td>
         </tr>
+        <tr>
+            <td style="border: 1px solid;">Cloudflare Tunnel Enable</td>
+            <td style="border: 1px solid;">{{.Cloudflared}}</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid;">CF Tunnel Token</td>
+            <td style="border: 1px solid;">{{.CloudflaredToken}}</td>
+        </tr>
     </table>
     <p>To apply, click the button below. If incorrect, feel free to hit the back button and revise. To discard, return to the <a href="/">admin panel</a>.</p>
     <form action="/apply" method="post">

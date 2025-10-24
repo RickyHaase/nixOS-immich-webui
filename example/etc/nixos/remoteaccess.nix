@@ -5,9 +5,28 @@ let
   vars = builtins.fromJSON (builtins.readFile ./nixconfig.json);
 in
 {
-  # cloudflared
-  # Must also allow unfree
-  # Not sure if it will be better to run on host or in docker
+  # Cloudflare Tunnel - Add cloudflared package to system
+  environment.systemPackages = lib.mkIf vars.remoteAccess.cloudflared.enable [
+    pkgs.cloudflared
+  ];
+
+  # Cloudflare Tunnel service
+  systemd.services.cloudflared-tunnel = lib.mkIf vars.remoteAccess.cloudflared.enable {
+    description = "Cloudflare Tunnel";
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    wantedBy = [ "multi-user.target" ];
+
+    serviceConfig = {
+      Type = "simple";
+      Restart = "always";
+      RestartSec = "5s";
+    };
+
+    script = with pkgs; ''
+      ${cloudflared}/bin/cloudflared tunnel --no-autoupdate run --token ${vars.remoteAccess.cloudflared.token}
+    '';
+  };
 
   # Tailscale VPN service from JSON configuration
   services.tailscale.enable = vars.remoteAccess.tailscale.enable;
