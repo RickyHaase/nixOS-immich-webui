@@ -12,8 +12,8 @@
       "authKey": "tskey-auth-test123"
     },
     "cloudflared": {
-      "enable": false,
-      "token": ""
+      "enable": true,
+      "token": "eyJhIjoiMTE5MmQzZTZiYTUwZDExODNkMDZkMWNjNzY1YTFjZjIiLCJ0IjoiYmFiN2NkZWUtY2JjOS00MGY0LWFiZWEtNzcwNzBkMzFjN2FmIiwicyI6IlpUUTVNMlk0TjJJdE5UUXhNUzAwTURjM0xUa3dPVE10TVdWbFltVTVOV1F4T1RCbSJ9"
     }
   }
 }

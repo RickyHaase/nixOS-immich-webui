@@ -30,12 +30,14 @@ type NixConfig struct {
 	UpgradeTime  string // start of 1-hour window, interruption should be minimal during that window
 	UpgradeLower string // value derived from UpgradeTime+30min
 	UpgradeUpper string // value derived from UpgradeTime+60min
-	Tailscale        bool
-	TSAuthkey        string
-	Cloudflared      bool
-	CloudflaredToken string
-	Email            string
-	EmailPass    bool
+	Tailscale            bool
+	TSAuthkey            string
+	TSAuthkeySet         bool
+	Cloudflared          bool
+	CloudflaredToken     string
+	CloudflaredTokenSet  bool
+	Email                string
+	EmailPass            bool
 	MLModel      string
 }
 
@@ -47,12 +49,14 @@ func (cv *ConfigVariables) ToNixConfig() *NixConfig {
 		UpgradeTime:  cv.System.UpgradeTime,
 		UpgradeLower: cv.System.UpgradeLower,
 		UpgradeUpper: cv.System.UpgradeUpper,
-		Tailscale:        cv.RemoteAccess.Tailscale.Enable,
-		TSAuthkey:        cv.RemoteAccess.Tailscale.AuthKey,
-		Cloudflared:      cv.RemoteAccess.Cloudflared.Enable,
-		CloudflaredToken: cv.RemoteAccess.Cloudflared.Token,
-		Email:            "",
-		EmailPass:    false,
+		Tailscale:           cv.RemoteAccess.Tailscale.Enable,
+		TSAuthkey:           cv.RemoteAccess.Tailscale.AuthKey,
+		TSAuthkeySet:        cv.RemoteAccess.Tailscale.AuthKey != "",
+		Cloudflared:         cv.RemoteAccess.Cloudflared.Enable,
+		CloudflaredToken:    cv.RemoteAccess.Cloudflared.Token,
+		CloudflaredTokenSet: cv.RemoteAccess.Cloudflared.Token != "",
+		Email:               "",
+		EmailPass:           false,
 	}
 
 	// Email fields and ML model are managed separately - get them from immich-config.json for template compatibility

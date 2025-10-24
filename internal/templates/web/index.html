@@ -96,7 +96,7 @@
         <!-- Enter Tailscale Authkey -->
         <!-- Need to make this hide when tailscale is disabled -->
         <label for="tailscale-authkey">Authkey:</label>
-        <input type="text" id="tailscale-authkey" name="tailscale-authkey" value="{{.TSAuthkey}}" placeholder="tskey-auth-kV7bYL6CNTRL-GXXhAHWhHXAVTcumJyyxXAc2cyjxQ3QkD" pattern='tskey-auth-[a-zA-Z0-9-]+-[a-zA-Z0-9]+'>
+        <input type="text" id="tailscale-authkey" name="tailscale-authkey" placeholder="{{if .TSAuthkeySet}}auth key is set{{else}}tskey-auth-kV7bYL6CNTRL-GXXhAHWhHXAVTcumJyyxXAc2cyjxQ3QkD{{end}}" pattern='tskey-auth-[a-zA-Z0-9-]+-[a-zA-Z0-9]+'>
         <br><small>Currently only enables SSH access over the tailnet.</small>
         <!-- The Caddy reverse proxy is not configured to allow http access from any hostname other than immich.local. -->
         <!-- Button to enable tailscale serve for localhost:2283 -->
@@ -111,7 +111,7 @@
         </select>
         <!-- Enter Cloudflare Tunnel Token -->
         <label for="cloudflared-token">Tunnel Token:</label>
-        <input type="text" id="cloudflared-token" name="cloudflared-token" value="{{.CloudflaredToken}}" placeholder="eyJhIjoiXXXXXXXXXX...">
+        <input type="text" id="cloudflared-token" name="cloudflared-token" placeholder="{{if .CloudflaredTokenSet}}tunnel token is set{{else}}eyJhIjoiXXXXXXXXXX...{{end}}">
         <br><small>Create tunnel in Cloudflare Zero Trust dashboard, route to http://localhost:2283, then paste token here.</small>
 
         <!-- Eventually will add a form to configure the Caddy basic auth password for the admin panel -->

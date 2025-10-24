@@ -103,15 +103,33 @@ func (h *SystemHandler) HandleSave(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Load current config to preserve existing secrets if not provided
+	currentCfg, err := config.LoadCurrentConfigJSON()
+	if err != nil {
+		slog.Error("| Error loading current config |", "err", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	// Build new JSON configuration structure
 	cfgJSON := &config.ConfigVariables{}
 	cfgJSON.System.TimeZone = timezone
 	cfgJSON.System.AutoUpgrade = config.ParseBool(r.FormValue("auto-updates"))
 	cfgJSON.System.UpgradeTime = updateTime
 	cfgJSON.RemoteAccess.Tailscale.Enable = tailscaleEnabled
-	cfgJSON.RemoteAccess.Tailscale.AuthKey = tailscaleAuthKey
+	// Preserve existing auth key if empty submitted (field is blank in UI when key is set)
+	if tailscaleAuthKey == "" {
+		cfgJSON.RemoteAccess.Tailscale.AuthKey = currentCfg.RemoteAccess.Tailscale.AuthKey
+	} else {
+		cfgJSON.RemoteAccess.Tailscale.AuthKey = tailscaleAuthKey
+	}
 	cfgJSON.RemoteAccess.Cloudflared.Enable = cloudflaredEnabled
-	cfgJSON.RemoteAccess.Cloudflared.Token = cloudflaredToken
+	// Preserve existing token if empty submitted (field is blank in UI when token is set)
+	if cloudflaredToken == "" {
+		cfgJSON.RemoteAccess.Cloudflared.Token = currentCfg.RemoteAccess.Cloudflared.Token
+	} else {
+		cfgJSON.RemoteAccess.Cloudflared.Token = cloudflaredToken
+	}
 
 	t1, t2, err := config.GetLowerUpper(cfgJSON.System.UpgradeTime)
 	if err != nil {
