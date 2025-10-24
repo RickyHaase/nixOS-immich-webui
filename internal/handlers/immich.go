@@ -113,9 +113,11 @@ func (h *ImmichHandler) HandleEmailPost(w http.ResponseWriter, r *http.Request) 
 	emailData := struct {
 		Email     string
 		EmailPass bool
+		Saved     bool
 	}{
 		Email:     immich.Notifications.SMTP.Transport.Username,
 		EmailPass: immich.Notifications.SMTP.Transport.Password != "",
+		Saved:     true,
 	}
 
 	tmpl, err := htmltemplate.ParseFS(h.templates, "web/email_form.html")
@@ -169,8 +171,10 @@ func (h *ImmichHandler) HandleMLModelPost(w http.ResponseWriter, r *http.Request
 	// Create struct for template data
 	mlData := struct {
 		ModelName string
+		Saved     bool
 	}{
 		ModelName: immich.MachineLearning.Clip.ModelName,
+		Saved:     true,
 	}
 
 	tmpl, err := htmltemplate.ParseFS(h.templates, "web/ml_form.html")
@@ -254,6 +258,7 @@ func (h *ImmichHandler) HandleOAuthPost(w http.ResponseWriter, r *http.Request) 
 		OAuthClientSecretSet bool
 		OAuthIssuerUrl       string
 		OAuthPublicDomain    string
+		Saved                bool
 	}{
 		OAuthEnabled:         immich.OAuth.Enabled,
 		PasswordLoginEnabled: immich.PasswordLogin.Enabled,
@@ -261,6 +266,7 @@ func (h *ImmichHandler) HandleOAuthPost(w http.ResponseWriter, r *http.Request) 
 		OAuthClientSecretSet: immich.OAuth.ClientSecret != "",
 		OAuthIssuerUrl:       immich.OAuth.IssuerUrl,
 		OAuthPublicDomain:    immich.Server.ExternalDomain,
+		Saved:                true,
 	}
 
 	// Strip https:// prefix from externalDomain for display

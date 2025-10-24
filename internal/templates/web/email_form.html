@@ -1,4 +1,6 @@
     <form id="email-form" action="/email" method="post">
+        {{if .Saved}}<div id="email-success" style="color: green; margin-bottom: 8px; transition: opacity 0.5s;">Saved successfully</div>
+        <script>setTimeout(function() { var el = document.getElementById('email-success'); if(el) { el.style.opacity = '0'; setTimeout(function() { el.remove(); }, 500); } }, 3000);</script>{{end}}
         <label for="gmail-address">Gmail Address:</label>
         <input type="email" id="gmail-address" name="gmail-address" placeholder="example@gmail.com" value="{{if .Email}}{{.Email}}{{else}}{{end}}">        <label for="gmail-password">Gmail App Password:</label>
         <input type="password" id="gmail-password" name="gmail-password" placeholder="{{if .EmailPass}}password is set{{else}}fded beid aibr kxps{{end}}">

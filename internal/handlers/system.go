@@ -192,7 +192,18 @@ func (h *SystemHandler) HandleApply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte("Rebuild Completed Successfully"))
+	tmpl, err := htmltemplate.ParseFS(h.templates, "web/apply_success.html")
+	if err != nil {
+		slog.Error("| Error parsing apply success template |", "err", err)
+		http.Error(w, "Rebuild completed but failed to render success page", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tmpl.Execute(w, nil); err != nil {
+		slog.Error("| Error executing apply success template |", "err", err)
+		http.Error(w, "Rebuild completed but failed to render success page", http.StatusInternalServerError)
+		return
+	}
 }
 
 // HandlePoweroff handles system poweroff requests

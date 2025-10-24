@@ -46,6 +46,7 @@ type NixConfig struct {
 	OAuthClientSecretSet bool
 	OAuthIssuerUrl       string
 	OAuthPublicDomain    string
+	Saved                bool // For displaying success messages in forms
 }
 
 // ToNixConfig converts ConfigVariables to NixConfig structure for template compatibility
@@ -64,6 +65,7 @@ func (cv *ConfigVariables) ToNixConfig() *NixConfig {
 		CloudflaredTokenSet: cv.RemoteAccess.Cloudflared.Token != "",
 		Email:               "",
 		EmailPass:           false,
+		Saved:               false, // Default to false on initial page load
 	}
 
 	// Email fields, ML model, and OAuth are managed separately - get them from immich-config.json for template compatibility
