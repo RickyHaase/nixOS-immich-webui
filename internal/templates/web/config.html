@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration - nixmich webui</title>
+    <style>
+        .hidden {
+            display: none;
+        }
+
+
+        body {
+            max-width: 900px;
+            margin: 12px;
+            line-height: 1.4;
+        }
+
+        input, select, button {
+            padding: 5px 8px;
+            margin: 0px 0;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="url"],
+        input[type="time"],
+        select {
+            min-width: 250px;
+        }
+
+        button {
+            cursor: pointer;
+            margin-right: 6px;
+        }
+
+        label {
+            display: inline-block;
+            margin-top: 8px;
+            margin-bottom: 2px;
+        }
+
+        form {
+            margin-bottom: 12px;
+        }
+
+        h2 {
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+
+        h3 {
+            margin-top: 8px;
+            margin-bottom: 6px;
+        }
+
+        hr {
+            margin: 16px 0;
+            border: none;
+            border-top: 1px solid #ddd;
+        }
+
+        small {
+            display: block;
+            margin-top: 1px;
+            margin-bottom: 3px;
+            color: #666;
+        }
+
+        nav {
+            margin-bottom: 16px;
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        nav a {
+            margin-right: 12px;
+            text-decoration: none;
+            color: #0066cc;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function toggleFields() {
+            const autoUpdates = document.getElementById('auto-updates').value;
+            const updateTime = document.getElementById('update-time');
+            const updateTimeLabel = document.querySelector('label[for="update-time"]');
+            const tailscale = document.getElementById('tailscale').value;
+            const tailscaleAuthkey = document.getElementById('tailscale-authkey');
+            const tailscaleAuthkeyLabel = document.querySelector('label[for="tailscale-authkey"]');
+            const cloudflared = document.getElementById('cloudflared').value;
+            const cloudflaredToken = document.getElementById('cloudflared-token');
+            const cloudflaredTokenLabel = document.querySelector('label[for="cloudflared-token"]');
+
+            if (autoUpdates === 'true') {
+                updateTime.classList.remove('hidden');
+                updateTimeLabel.classList.remove('hidden');
+            } else {
+                updateTime.classList.add('hidden');
+                updateTimeLabel.classList.add('hidden');
+            }
+
+            if (tailscale === 'true') {
+                tailscaleAuthkey.classList.remove('hidden');
+                tailscaleAuthkeyLabel.classList.remove('hidden');
+            } else {
+                tailscaleAuthkey.classList.add('hidden');
+                tailscaleAuthkeyLabel.classList.add('hidden');
+            }
+
+            if (cloudflared === 'true') {
+                cloudflaredToken.classList.remove('hidden');
+                cloudflaredTokenLabel.classList.remove('hidden');
+            } else {
+                cloudflaredToken.classList.add('hidden');
+                cloudflaredTokenLabel.classList.add('hidden');
+            }
+
+            // OAuth conditional fields
+            const oauthEnabled = document.getElementById('oauth-enabled');
+            if (oauthEnabled) {
+                const oauthValue = oauthEnabled.value;
+                const oauthConditionals = document.querySelectorAll('.oauth-conditional');
+
+                if (oauthValue === 'true') {
+                    oauthConditionals.forEach(el => el.classList.remove('hidden'));
+                } else {
+                    oauthConditionals.forEach(el => el.classList.add('hidden'));
+                }
+            }
+        }
+
+        document.getElementById('auto-updates').addEventListener('change', toggleFields);
+        document.getElementById('tailscale').addEventListener('change', toggleFields);
+        document.getElementById('cloudflared').addEventListener('change', toggleFields);
+
+        // Add OAuth toggle listener
+        const oauthEnabled = document.getElementById('oauth-enabled');
+        if (oauthEnabled) {
+            oauthEnabled.addEventListener('change', toggleFields);
+        }
+
+        toggleFields();
+    });
+    </script>
+</head>
+<body>
+    <h1>nixmich web UI - v0.1.0-alpha3</h1>
+
+    <nav>
+        <a href="/">Main</a>
+        <a href="/config">Configuration</a>
+    </nav>
+
+    <hr>
+
+    <!-- NixOS Configuration -->
+    <form action="/save" method="post">
+        <h2>System</h2>
+        <!-- TimeZone Picker -->
+        <label for="timezone">System Timezone:</label>
+        <select name="timezone" id="timezone">
+            <option value="America/New_York" {{if eq .TimeZone "America/New_York"}}selected{{end}}>Eastern Time (ET)</option>
+            <option value="America/Chicago" {{if eq .TimeZone "America/Chicago"}}selected{{end}}>Central Time (CT)</option>
+            <option value="America/Denver" {{if eq .TimeZone "America/Denver"}}selected{{end}}>Mountain Time (MT)</option>
+            <option value="America/Phoenix" {{if eq .TimeZone "America/Phoenix"}}selected{{end}}>Mountain Time - Arizona (MT)</option>
+            <option value="America/Los_Angeles" {{if eq .TimeZone "America/Los_Angeles"}}selected{{end}}>Pacific Time (PT)</option>
+        </select>
+        <!-- Auto Updates Picker -->
+        <label for="auto-updates">Auto Updates:</label>
+        <select name="auto-updates" id="auto-updates">
+            <option value="true" {{if .AutoUpgrade}}selected{{end}}>Enabled</option>
+            <option value="false" {{if not .AutoUpgrade}}selected{{end}}>Disabled</option>
+        </select>
+        <!-- Select Auto-Update window -->
+        <label for="update-time">Auto-Update 1hr Time Window Start:</label>
+        <input type="time" id="update-time" name="update-time" value="{{.UpgradeTime}}">
+
+        <h3>Remote Access</h3>
+        <!-- Enable Tailscale -->
+        <label for="tailscale">Tailscale:</label>
+        <select name="tailscale" id="tailscale">
+            <option value="true" {{if .Tailscale}}selected{{end}}>Enabled</option>
+            <option value="false" {{if not .Tailscale}}selected{{end}}>Disabled</option>
+        </select>
+        <!-- Enter Tailscale Authkey -->
+        <label for="tailscale-authkey">Authkey:</label>
+        <input type="text" id="tailscale-authkey" name="tailscale-authkey" placeholder="{{if .TSAuthkeySet}}auth key is set{{else}}tskey-auth-kV7bYL6CNTRL-GXXhAHWhHXAVTcumJyyxXAc2cyjxQ3QkD{{end}}" pattern='tskey-auth-[a-zA-Z0-9-]+-[a-zA-Z0-9]+'>
+        <br><small>Currently only enables SSH access over the tailnet.</small>
+        <br><br>
+        <!-- Enable Cloudflare Tunnel -->
+        <label for="cloudflared">Cloudflare Tunnel:</label>
+        <select name="cloudflared" id="cloudflared">
+            <option value="true" {{if .Cloudflared}}selected{{end}}>Enabled</option>
+            <option value="false" {{if not .Cloudflared}}selected{{end}}>Disabled</option>
+        </select>
+        <!-- Enter Cloudflare Tunnel Token -->
+        <label for="cloudflared-token">Tunnel Token:</label>
+        <input type="text" id="cloudflared-token" name="cloudflared-token" placeholder="{{if .CloudflaredTokenSet}}tunnel token is set{{else}}eyJhIjoiXXXXXXXXXX...{{end}}">
+        <br><small><strong>Security Warning:</strong> Do NOT enable public access unless OAuth or other MFA is configured on the publicly exposed service. Create tunnel in Cloudflare Zero Trust dashboard, route to http://localhost:2283, then paste token here.</small>
+
+        <br><br><button id="save">Save</button>
+    </form>
+
+    <hr>
+
+    <!-- Immich Configuration -->
+    <h2>Immich Configuration</h2>
+    <form id="email-form" action="/email" method="post">
+        <label for="gmail-address">Gmail Address:</label>
+        <input type="email" id="gmail-address" name="gmail-address" placeholder="example@gmail.com" value="{{if .Email}}{{.Email}}{{else}}{{end}}">
+        <label for="gmail-password">Gmail App Password:</label>
+        <input type="password" id="gmail-password" name="gmail-password" placeholder="{{if .EmailPass}}password is set{{else}}fded beid aibr kxps{{end}}">
+        <button type="submit" hx-post="/email" hx-target="#email-form">Submit</button>
+        <br><small>Use your gmail account with an <a href="https://support.google.com/mail/answer/185833">app password</a> to allow for immich to send emails.</small>
+    </form>
+
+    <br>
+
+    <form id="ml-form" action="/mlmodel" method="post">
+        <label for="ml-model">CLIP Model:</label>
+        <select name="ml-model" id="ml-model">
+            <option value="ViT-B-32__openai" {{if eq .MLModel "ViT-B-32__openai"}}selected{{end}}>Default (ViT-B-32__openai)</option>
+            <option value="ViT-B-16-SigLIP__webli" {{if eq .MLModel "ViT-B-16-SigLIP__webli"}}selected{{end}}>Improved (ViT-B-16-SigLIP__webli)</option>
+            <option value="ViT-SO400M-14-SigLIP-384__webli" {{if eq .MLModel "ViT-SO400M-14-SigLIP-384__webli"}}selected{{end}}>Beefy (ViT-SO400M-14-SigLIP-384__webli)</option>
+        </select>
+        <button type="submit" hx-post="/mlmodel" hx-target="#ml-form">Submit</button>
+        <br><small>Select the machine learning model for image recognition. Higher quality models require more resources.</small>
+    </form>
+
+    <br>
+
+    <h3>OAuth Authentication</h3>
+    {{template "oauth_form" .}}
+
+</body>
+</html>
