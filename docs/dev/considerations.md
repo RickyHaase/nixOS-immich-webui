@@ -1,3 +1,7 @@
+# Development Considerations
+
+This document captures important implementation decisions and considerations for the project.
+
 ## Implementation Notes
 - I am not planning to implement any authentication for the admin interface at this time. Authentication will be handled via whatever methods are offered through the proxy being used (Caddy basic auth for local access or for remote access, Cloudflare Zero Trust's auth mechanism).
   - Caddy basic auth password reset needs to be handled somehow... I am thinking either a recovery page on an unprotected path with an email password reset flow and/or a command-line flag that can be run if the user has physical access to the appliance.

@@ -3,131 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NixOS Admin</title>
+    <title>nixmich webui</title>
     <style>
         .hidden {
             display: none;
         }
-    </style>
-    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
-    <script>
-    // Not at all married to this function... need to get a JS refresher and evaluate this script when it comes time to dial-in the front-end
-    document.addEventListener('DOMContentLoaded', function() {
-        function toggleFields() {
-            const autoUpdates = document.getElementById('auto-updates').value;
-            const updateTime = document.getElementById('update-time');
-            const updateTimeLabel = document.querySelector('label[for="update-time"]');
-            const tailscale = document.getElementById('tailscale').value;
-            const tailscaleAuthkey = document.getElementById('tailscale-authkey');
-            const tailscaleAuthkeyLabel = document.querySelector('label[for="tailscale-authkey"]');
 
-            if (autoUpdates === 'true') {
-                updateTime.classList.remove('hidden');
-                updateTimeLabel.classList.remove('hidden');
-            } else {
-                updateTime.classList.add('hidden');
-                updateTimeLabel.classList.add('hidden');
-            }
 
-            if (tailscale === 'true') {
-                tailscaleAuthkey.classList.remove('hidden');
-                tailscaleAuthkeyLabel.classList.remove('hidden');
-            } else {
-                tailscaleAuthkey.classList.add('hidden');
-                tailscaleAuthkeyLabel.classList.add('hidden');
-            }
+        body {
+            max-width: 900px;
+            margin: 12px;
+            line-height: 1.4;
         }
 
-        document.getElementById('auto-updates').addEventListener('change', toggleFields);
-        document.getElementById('tailscale').addEventListener('change', toggleFields);
+        input, select, button {
+            padding: 5px 8px;
+            margin: 0px 0;
+            font-size: 14px;
+        }
 
-        toggleFields();
-    });
-    </script>
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="url"],
+        input[type="time"],
+        select {
+            min-width: 250px;
+        }
+
+        button {
+            cursor: pointer;
+            margin-right: 6px;
+        }
+
+        label {
+            display: inline-block;
+            margin-top: 8px;
+            margin-bottom: 2px;
+        }
+
+        form {
+            margin-bottom: 12px;
+        }
+
+        h2 {
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+
+        h3 {
+            margin-top: 8px;
+            margin-bottom: 6px;
+        }
+
+        hr {
+            margin: 16px 0;
+            border: none;
+            border-top: 1px solid #ddd;
+        }
+
+        small {
+            display: block;
+            margin-top: 1px;
+            margin-bottom: 3px;
+            color: #666;
+        }
+
+        nav {
+            margin-bottom: 16px;
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        nav a {
+            margin-right: 12px;
+            text-decoration: none;
+            color: #0066cc;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
 </head>
 <body>
-    <h1>NixOS Immich Host Admin Panel</h1>
+    <h1>nixmich web UI - v0.1.0-alpha3</h1>
 
-    <hr>
+    <nav>
+        <a href="/">Main</a>
+        <a href="/config">Configuration</a>
+    </nav>
 
-    <!-- Will need to add HTMX for progressive enhancement to reduce number of unnecessary page loads while keeping the form functionality for non-JS clients -->
-    <form action="/save" method="post">
-        <h2>System</h2>
-        <!-- TimeZone Picker -->
-        <label for="timezone">System Timezone:</label>
-        <select name="timezone" id="timezone">
-            <option value="America/New_York" {{if eq .TimeZone "America/New_York"}}selected{{end}}>Eastern Time (ET)</option>
-            <option value="America/Chicago" {{if eq .TimeZone "America/Chicago"}}selected{{end}}>Central Time (CT)</option>
-            <option value="America/Denver" {{if eq .TimeZone "America/Denver"}}selected{{end}}>Mountain Time (MT)</option>
-            <option value="America/Phoenix" {{if eq .TimeZone "America/Phoenix"}}selected{{end}}>Mountain Time - Arizona (MT)</option>
-            <option value="America/Los_Angeles" {{if eq .TimeZone "America/Los_Angeles"}}selected{{end}}>Pacific Time (PT)</option>
-        </select>
-        <!-- Auto Updates Picker -->
-        <label for="auto-updates">Auto Updates:</label>
-        <select name="auto-updates" id="auto-updates">
-            <option value="true" {{if .AutoUpgrade}}selected{{end}}>Enabled</option>
-            <option value="false" {{if not .AutoUpgrade}}selected{{end}}>Disabled</option>
-        </select>
-        <!-- Select Auto-Update window -->
-        <!-- Need to show only if Auto Updates is enabled -->
-        <label for="update-time">Auto-Update 1hr Time Window Start:</label>
-        <input type="time" id="update-time" name="update-time" value="{{.UpgradeTime}}">
-        <!-- <br><small>This is the start time of a 1-hour window. If available, updates could apply followed by a reboot sometime within 1 hour of slected time.</small> -->
-
-        <h3>Remote Access</h3>
-        <!-- Enable Tailscale -->
-        <label for="tailscale">Tailscale:</label>
-        <select name="tailscale" id="tailscale">
-            <option value="true" {{if .Tailscale}}selected{{end}}>Enabled</option>
-            <option value="false" {{if not .Tailscale}}selected{{end}}>Disabled</option>
-        </select>
-        <!-- Enter Tailscale Authkey -->
-        <!-- Need to make this hide when tailscale is disabled -->
-        <label for="tailscale-authkey">Authkey:</label>
-        <input type="text" id="tailscale-authkey" name="tailscale-authkey" value="{{.TSAuthkey}}" placeholder="tskey-auth-kV7bYL6CNTRL-GXXhAHWhHXAVTcumJyyxXAc2cyjxQ3QkD" pattern='tskey-auth-[a-zA-Z0-9-]+-[a-zA-Z0-9]+'>
-        <br><small>Currently only enables SSH access over the tailnet.</small>
-        <!-- The Caddy reverse proxy is not configured to allow http access from any hostname other than immich.local. -->
-        <!-- Button to enable tailscale serve for localhost:2283 -->
-        <!-- Button to enable tailscale funnel? What about Admin Panel? -->
-        <!-- Need to add ability to sign out Tailscale -->
-
-        <!-- Eventually will add a form to configure the Caddy basic auth password for the admin panel -->
-        <!-- <h2>Admin Pannel Security</h2>
-        <p>There is currently no way to reset this password if forgotten. Additionally, any eaves-droppers on the network can intercept this on submit and use it to gain access to administration of the server. It's barely secuirty, really only worth enabling to stop random roommates from stumbling upon the admin panel and goofing something up.</p>
-        <label for="admin-password">Admin Password:</label>
-        <input type="password" id="admin-password" name="admin-password"> -->
-
-        <br><br><button id="save">Save</button>
-    </form>
-
-    <hr>
 
     <h2>Immich Container Management</h2>
-    <!-- This will certainly be moved back over to the nixos admin panel once I get email notifications configured in some capacity over there... for now tho, with no auto-backups or alerting to be done, I don't need it for the nixos side of things so I'm not going to complicate things -->
-    <!-- Will need to get template engine to parse and pre-fill these values... should be easier since file stores in .json -->
-    <!-- ***Was in the middle of building out this functionality when time to release came. Server-side code is commented out.*** -->
-    <form id="email-form" action="/email" method="post">
-        <label for="gmail-address">Gmail Address:</label>
-        <input type="email" id="gmail-address" name="gmail-address" placeholder="example@gmail.com" value="{{if .Email}}{{.Email}}{{else}}{{end}}">
-        <label for="gmail-password">Gmail App Password:</label>
-        <input type="password" id="gmail-password" name="gmail-password" placeholder="{{if .EmailPass}}password is set{{else}}fded beid aibr kxps{{end}}">
-        <button type="submit" hx-post="/email" hx-target="#email-form">Submit</button>
-        <br><small>Use your gmail account with an <a href="https://support.google.com/mail/answer/185833">app password</a> to allow for immich to send emails.</small>
-    </form>
-
-    <!-- <label for="immich-config">Immich Configuration:</label>
-    <br><select name="immich-config" id="immich-config">
-        <option value="manage">Manage Immich settings here, relying mainly on defaults</option>
-        <option value="defer">Defer Immich configuration to the admin interface for the first user created</option>
-    </select>
-    <br><small>Currently just a placeholder - thinking about this option but not set on it</small> -->
-
-    <!-- Start/Stop -->
     <!-- Need to change status update on page load to be rendered server-side to provide atleat minimal functionality to non-JS clients -->
     <!-- Really need to re-do each button to be a form to maintain functionality without JS enabled. Will worry about later, now is just testing. -->
     <!-- Upon press, button needs to become un-clickable -->
     <!-- This might be an interesting first implementation of HTMX -->
-    <p>Immich Status: <a href="http://immich.local" target="_blank" id="status" hx-get="/status" hx-trigger="load, every 10s"></a></p>
+    <h3>Immich Status: <a href="http://immich.local" target="_blank" id="status" hx-get="/status" hx-trigger="load, every 10s"></a></h3>
     <button id="stopButton" onclick="submitPost('stop')">Stop</button>
     <button id="startButton" onclick="submitPost('start')">Start</button>
     <button id="updateButton" onclick="submitPost('update')">Update</button>
@@ -154,15 +128,25 @@
 
     <h2>Backup to USB</h2>
     <form id="backup-form">
-        <p hx-get="backupstatus" hx-trigger="load" target="#backup-form">JavaScript Required for Backup Functionality at this time</p>
-
-        <!-- <label for="select-disk">Select Disk:</label>
+        <label for="select-disk">Select Disk:</label>
         <select name="select-disk" id="select-disk" hx-get="/disks" hx-trigger="load">
-            <option>Requires JavaScript to be Enabled</option>
+            <option>Loading disks...</option>
         </select>
+        <input type="checkbox" name="verify-backup" id="verify-backup" value="true">
+        <label for="verify-backup">Verify backup integrity with checksums</label>
+        <br><small>Uses file checksums to ensure bit-for-bit accuracy. Significantly slower but ensures perfect integrity.</small>
+        <br>
         <button id="refresh" type="button" hx-get="/disks" hx-target="#select-disk" hx-swap="innerHTML">Refresh List</button>
-        <button id="start-backup" type="submit" hx-post="/backup" hx-target="#backup-form" hx-confirm="Are you sure you want to start the backup? This may take some time.">Start Backup</button>
-        <br><small>Select backup disk from list. In order for a disk to be eligible, it must be connected via USB and have a partition formatted exFAT.</small> -->
+        <button id="start-backup" type="submit" hx-post="/backup" hx-target="#backup-result" hx-confirm="Are you sure you want to start the backup? This may take some time.">Start Backup</button>
+        <br><small>Select backup disk from list. In order for a disk to be eligible, it must be connected via USB and have a partition formatted exFAT.</small>
+
+        <!-- Backup result message (shows "Backup Started!" when backup begins) -->
+        <div id="backup-result"></div>
+
+        <!-- Backup status - loads once, then polling controlled by response -->
+        <div id="backup-status" hx-get="/backupstatus" hx-trigger="load" hx-swap="innerHTML">
+            <!-- Status will be loaded here -->
+        </div>
     </form>
     <hr>
     <h2>Server Commands</h2>

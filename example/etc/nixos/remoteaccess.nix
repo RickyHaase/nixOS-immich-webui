@@ -1,14 +1,38 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
+let
+  # Read JSON variables using builtins.fromJSON
+  vars = builtins.fromJSON (builtins.readFile ./nixconfig.json);
+in
 {
-  # cloudflared
-  # Must also allow unfree
-  # Not sure if it will be better to run on host or in docker
+  # Cloudflare Tunnel - Add cloudflared package to system
+  environment.systemPackages = lib.mkIf vars.remoteAccess.cloudflared.enable [
+    pkgs.cloudflared
+  ];
 
-  services.tailscale.enable = true;
+  # Cloudflare Tunnel service
+  systemd.services.cloudflared-tunnel = lib.mkIf vars.remoteAccess.cloudflared.enable {
+    description = "Cloudflare Tunnel";
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    wantedBy = [ "multi-user.target" ];
 
-  # create a oneshot job to authenticate to Tailscale
-  systemd.services.tailscale-autoconnect = {
+    serviceConfig = {
+      Type = "simple";
+      Restart = "always";
+      RestartSec = "5s";
+    };
+
+    script = with pkgs; ''
+      ${cloudflared}/bin/cloudflared tunnel --no-autoupdate run --token ${vars.remoteAccess.cloudflared.token}
+    '';
+  };
+
+  # Tailscale VPN service from JSON configuration
+  services.tailscale.enable = vars.remoteAccess.tailscale.enable;
+
+  # create a oneshot job to authenticate to Tailscale if TS service is enabled
+  systemd.services.tailscale-autoconnect = lib.mkIf vars.remoteAccess.tailscale.enable {
     description = "Automatic connection to Tailscale";
 
     # make sure tailscale is running before trying to connect to tailscale
@@ -19,7 +43,7 @@
     # set this service as a oneshot job
     serviceConfig.Type = "oneshot";
 
-    # have the job run this shell script
+    # have the job run this shell script using JSON auth key
     script = with pkgs; ''
     # wait for tailscaled to settle
     sleep 2
@@ -30,8 +54,8 @@
         exit 0
     fi
 
-    # otherwise authenticate with tailscale
-    ${tailscale}/bin/tailscale up -authkey tskey-auth-[example-key] --ssh
+    # otherwise authenticate with tailscale using auth key from JSON
+    ${tailscale}/bin/tailscale up -authkey ${vars.remoteAccess.tailscale.authKey} --ssh
     '';
     # Maybe add ssh and/or serve options
 

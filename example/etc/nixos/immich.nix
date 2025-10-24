@@ -1,5 +1,9 @@
 { config, pkgs, ... }:
 
+let
+  # Read JSON variables using builtins.fromJSON (consistent pattern)
+  vars = builtins.fromJSON (builtins.readFile ./nixconfig.json);
+in
 {
   virtualisation.docker.enable = true;
   virtualisation.docker.autoPrune.enable = true;
@@ -28,7 +32,7 @@
       ExecStart = "${pkgs.docker}/bin/docker compose up";
       ExecStop = "${pkgs.docker}/bin/docker compose down";
       Restart = "always";
-      WorkingDirectory = "/root/immich-app";
+      WorkingDirectory = "/tank/immich-compose";
       TimeoutStopSec = "90";
     };
   };

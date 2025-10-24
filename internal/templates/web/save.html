@@ -3,10 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Confirmation - nixmich webui</title>
+    <style>
+        nav {
+            margin-bottom: 16px;
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        nav a {
+            margin-right: 12px;
+            text-decoration: none;
+            color: #0066cc;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
     <h1>Confirmation Window</h1>
+
+    <nav>
+        <a href="/">Main</a>
+        <a href="/config">Configuration</a>
+    </nav>
     <p>The below configuration has been saved. Would you like to appy the configuration now?</p>
     <table style="border: 1px solid; border-collapse: collapse;">
         <tr>
@@ -27,10 +49,18 @@
         </tr>
         <tr>
             <td style="border: 1px solid;">TS Authkey</td>
-            <td style="border: 1px solid;">{{.TSAuthkey}}</td>
+            <td style="border: 1px solid;">{{if .TSAuthkeySet}}***set***{{else}}(not set){{end}}</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid;">Cloudflare Tunnel Enable</td>
+            <td style="border: 1px solid;">{{.Cloudflared}}</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid;">CF Tunnel Token</td>
+            <td style="border: 1px solid;">{{if .CloudflaredTokenSet}}***set***{{else}}(not set){{end}}</td>
         </tr>
     </table>
-    <p>To apply, click the button below. If incorrect, feel free to hit the back button and revise. To discard, return to the <a href="/">admin panel</a>.</p>
+    <p>To apply, click the button below. If incorrect, feel free to hit the back button and revise. To discard, return to the <a href="/config">configuration page</a>.</p>
     <form action="/apply" method="post">
         <button type="submit" id="apply">Apply</button>
     </form>

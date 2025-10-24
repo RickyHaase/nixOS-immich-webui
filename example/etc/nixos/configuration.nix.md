@@ -20,14 +20,17 @@ In your `/etc/nixos/configuration.nix` file, add the following imports to the `i
     ./admin.nix
     ./networking.nix
     ./immich.nix
-    # ./remoteaccess.nix
+    ./remoteaccess.nix
   ];
 }
 ```
 
 ### 2.  Hostname Configuration
 
-Comment out the below line:
+Comment out the below lines:
 ```nix
 networking.hostName = "nixos"; # Define your hostname.
+
+time.timeZone = "America/New_York";
+
 ```

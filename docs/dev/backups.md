@@ -1,11 +1,17 @@
-# Backup design constraints/considerations
+# Backup System Implementation
 
-1. We will NOT format any disks. No data will ever be destroyed or overwritten except for that data which is in [external drive]/immich-server-backups.
-2. We will ONLY support exFAT formatted disks. This is so that user data backed up to that disk will be accessible by them no matter what system they are connected to.
-  - This results in a tricky situation with the above requirement, but users will have to pre-format their disks as exFAT before backups will work. Instructions for this process will be included in documentation.
-  - NTFS and APFS will not mount, maybe ext4 or ZFS could work since the drivers are there but they will not be tested.
-  - I would like to eventually also have a ZFS-based backup solution but anyone who wants that can use the admin.nix file to configure syncoid.
-3. Users are welcome to use the backup HDD for other things so long as driveroot/immich-server-backups is expected to be overwritten during system backups.
+This document describes the design constraints, current implementation, and future plans for the backup system.
+
+## Design Constraints
+
+1. **No Disk Formatting**: We will NOT format any disks. No data will ever be destroyed or overwritten except for that data which is in `[external drive]/immich-server-backups`.
+
+2. **exFAT Only**: We will ONLY support exFAT formatted disks. This ensures that user data backed up to that disk will be accessible by them no matter what system they are connected to.
+   - This results in a tricky situation with the above requirement, but users will have to pre-format their disks as exFAT before backups will work. Instructions for this process will be included in documentation.
+   - NTFS and APFS will not mount, maybe ext4 or ZFS could work since the drivers are there but they will not be tested.
+   - I would like to eventually also have a ZFS-based backup solution but anyone who wants that can use the admin.nix file to configure syncoid.
+
+3. **Shared Usage**: Users are welcome to use the backup HDD for other things so long as `/immich-server-backups` is expected to be overwritten during system backups.
 
 ## Current State of Backups
 - The webUI will display all exFAT partitions that are connected via USB as "eligible disks." It does not check for size, available space, or anything additional to know if a backup will work. Backups can be done alongside other data, the only data that will be overwritten is if there's existing data in /partitionRoot/immich-server-backup/library or immich-server-backup/config/config-yyyy-mm-dd.zip.

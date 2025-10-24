@@ -1,0 +1,19 @@
+{
+  "system": {
+    "timeZone": "America/New_York",
+    "autoUpgrade": false,
+    "upgradeTime": "02:00",
+    "upgradeLower": "02:30",
+    "upgradeUpper": "03:00"
+  },
+  "remoteAccess": {
+    "tailscale": {
+      "enable": false,
+      "authKey": ""
+    },
+    "cloudflared": {
+      "enable": false,
+      "token": ""
+    }
+  }
+}

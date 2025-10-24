@@ -1,0 +1,61 @@
+{
+  "backup": {
+    "database": {
+      "cronExpression": "0 02 * * *",
+      "enabled": true,
+      "keepLastAmount": 14
+    }
+  },
+  "notifications": {
+    "smtp": {
+      "enabled": false,
+      "from": "Immich <example@gmail.com>",
+      "replyTo": "",
+      "transport": {
+        "host": "smtp.gmail.com",
+        "ignoreCert": false,
+        "password": "changeme",
+        "port": 587,
+        "username": "example@gmail.com"
+      }
+    }
+  },
+  "passwordLogin": {
+    "enabled": true
+  },
+  "oauth": {
+    "autoLaunch": false,
+    "autoRegister": true,
+    "buttonText": "Login with Cloudflare OAuth",
+    "clientId": "",
+    "clientSecret": "",
+    "defaultStorageQuota": null,
+    "enabled": false,
+    "issuerUrl": "",
+    "mobileOverrideEnabled": false,
+    "mobileRedirectUri": "",
+    "scope": "openid email profile",
+    "signingAlgorithm": "RS256",
+    "profileSigningAlgorithm": "none",
+    "storageLabelClaim": "email",
+    "storageQuotaClaim": "immich_quota"
+  },
+  "server": {
+    "externalDomain": "http://immich.local",
+    "loginPageMessage": "Admin Panel at http://immich.local:8080",
+    "publicUsers": true
+  },
+  "storageTemplate": {
+    "enabled": true,
+    "hashVerificationEnabled": true,
+    "template": "{{y}}/{{MM}}/{{dd}}/{{filename}}"
+  },
+  "machineLearning": {
+    "enabled": true,
+    "urls": ["http://immich-machine-learning:3003"],
+    "clip": {
+      "enabled": true,
+      "modelName": "ViT-B-32__openai"
+    }
+  }
+}

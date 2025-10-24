@@ -6,20 +6,21 @@
     tree
     go
     git
-    gh
-    htop
-    neofetch
-    claude-code
-    zip
+    # gh
+    # htop
+    # neofetch
+    # claude-code
+    # zip
+    # unzip
   ];
 
-  services.openssh.enable = true;
-  services.openssh.settings.PasswordAuthentication = true;
-  services.openssh.settings.PermitRootLogin = "yes";
+  # services.openssh.enable = true;
+  # services.openssh.settings.PasswordAuthentication = true;
+  # services.openssh.settings.PermitRootLogin = "yes";
 
   # https://www.reddit.com/r/NixOS/comments/185f0x4/how_to_mount_a_usb_drive/
   #services.devmon.enable = true;
-  #services.gvfs.enable = true; 
-  services.udisks2.enable = true;
+  #services.gvfs.enable = true;
+  #services.udisks2.enable = true;
 
 }
