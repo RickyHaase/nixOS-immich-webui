@@ -34,6 +34,7 @@ func main() {
 	
 	// System routes
 	mux.HandleFunc("GET /{$}", systemHandler.HandleRoot)
+	mux.HandleFunc("GET /config", systemHandler.HandleConfig)
 	mux.HandleFunc("POST /save", systemHandler.HandleSave)
 	mux.HandleFunc("POST /apply", systemHandler.HandleApply)
 	mux.HandleFunc("POST /poweroff", systemHandler.HandlePoweroff)

@@ -51,6 +51,34 @@ func (h *SystemHandler) HandleRoot(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// HandleConfig serves the configuration page
+func (h *SystemHandler) HandleConfig(w http.ResponseWriter, r *http.Request) {
+	slog.Info("| Received Request at /config |", "IP", r.Header.Get("X-Forwarded-For"))
+
+	cfgJSON, err := config.LoadCurrentConfigJSON()
+	if err != nil {
+		slog.Error("| Error loading JSON config |", "err", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Convert to old format for template compatibility
+	cfg := cfgJSON.ToNixConfig()
+
+	tmpl, err := htmltemplate.ParseFS(h.templates, "web/config.html", "web/oauth_form.html")
+	if err != nil {
+		slog.Error("| Error rendering config template |", "err", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := tmpl.Execute(w, cfg); err != nil {
+		slog.Error("| Error executing config template |", "err", err)
+		http.Error(w, "Failed to render configuration page", http.StatusInternalServerError)
+		return
+	}
+}
+
 // HandleSave processes configuration save requests
 func (h *SystemHandler) HandleSave(w http.ResponseWriter, r *http.Request) {
 	slog.Info("Received Save Request")

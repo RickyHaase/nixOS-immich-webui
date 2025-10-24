@@ -30,10 +30,10 @@
     "clientId": "another-test-client",
     "clientSecret": "test-secret-1234567890abcdef",
     "defaultStorageQuota": null,
-    "enabled": true,
+    "enabled": false,
     "issuerUrl": "https://another.cloudflareaccess.com",
     "mobileOverrideEnabled": false,
-    "mobileRedirectUri": "https://immich.another.com/api/oauth/mobile-redirect",
+    "mobileRedirectUri": "",
     "scope": "openid email profile",
     "signingAlgorithm": "RS256",
     "profileSigningAlgorithm": "none",
@@ -41,7 +41,7 @@
     "storageQuotaClaim": "immich_quota"
   },
   "server": {
-    "externalDomain": "https://immich.another.com",
+    "externalDomain": "http://immich.local",
     "loginPageMessage": "Admin Panel at http://immich.local:8080",
     "publicUsers": true
   },
