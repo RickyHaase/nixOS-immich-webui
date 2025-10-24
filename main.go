@@ -46,6 +46,7 @@ func main() {
 	mux.HandleFunc("POST /update", immichHandler.HandleUpdate)
 	mux.HandleFunc("POST /email", immichHandler.HandleEmailPost)
 	mux.HandleFunc("POST /mlmodel", immichHandler.HandleMLModelPost)
+	mux.HandleFunc("POST /oauth", immichHandler.HandleOAuthPost)
 	
 	// Backup routes
 	mux.HandleFunc("GET /disks", backupHandler.HandleGetDisks)

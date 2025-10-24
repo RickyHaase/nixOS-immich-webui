@@ -20,6 +20,26 @@
       }
     }
   },
+  "passwordLogin": {
+    "enabled": true
+  },
+  "oauth": {
+    "autoLaunch": false,
+    "autoRegister": true,
+    "buttonText": "Login with Cloudflare OAuth",
+    "clientId": "",
+    "clientSecret": "",
+    "defaultStorageQuota": null,
+    "enabled": false,
+    "issuerUrl": "",
+    "mobileOverrideEnabled": false,
+    "mobileRedirectUri": "",
+    "scope": "openid email profile",
+    "signingAlgorithm": "RS256",
+    "profileSigningAlgorithm": "none",
+    "storageLabelClaim": "email",
+    "storageQuotaClaim": "immich_quota"
+  },
   "server": {
     "externalDomain": "http://immich.local",
     "loginPageMessage": "Admin Panel at http://immich.local:8080",

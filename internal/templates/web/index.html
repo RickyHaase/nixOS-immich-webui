@@ -47,11 +47,30 @@
                 cloudflaredToken.classList.add('hidden');
                 cloudflaredTokenLabel.classList.add('hidden');
             }
+
+            // OAuth conditional fields
+            const oauthEnabled = document.getElementById('oauth-enabled');
+            if (oauthEnabled) {
+                const oauthValue = oauthEnabled.value;
+                const oauthConditionals = document.querySelectorAll('.oauth-conditional');
+
+                if (oauthValue === 'true') {
+                    oauthConditionals.forEach(el => el.classList.remove('hidden'));
+                } else {
+                    oauthConditionals.forEach(el => el.classList.add('hidden'));
+                }
+            }
         }
 
         document.getElementById('auto-updates').addEventListener('change', toggleFields);
         document.getElementById('tailscale').addEventListener('change', toggleFields);
         document.getElementById('cloudflared').addEventListener('change', toggleFields);
+
+        // Add OAuth toggle listener
+        const oauthEnabled = document.getElementById('oauth-enabled');
+        if (oauthEnabled) {
+            oauthEnabled.addEventListener('change', toggleFields);
+        }
 
         toggleFields();
     });
@@ -112,7 +131,7 @@
         <!-- Enter Cloudflare Tunnel Token -->
         <label for="cloudflared-token">Tunnel Token:</label>
         <input type="text" id="cloudflared-token" name="cloudflared-token" placeholder="{{if .CloudflaredTokenSet}}tunnel token is set{{else}}eyJhIjoiXXXXXXXXXX...{{end}}">
-        <br><small>Create tunnel in Cloudflare Zero Trust dashboard, route to http://localhost:2283, then paste token here.</small>
+        <br><small><strong>Security Warning:</strong> Do NOT enable public access unless OAuth or other MFA is configured on the publicly exposed service. Create tunnel in Cloudflare Zero Trust dashboard, route to http://localhost:2283, then paste token here.</small>
 
         <!-- Eventually will add a form to configure the Caddy basic auth password for the admin panel -->
         <!-- <h2>Admin Pannel Security</h2>
@@ -151,6 +170,11 @@
         <br><small>Select the machine learning model for image recognition. Higher quality models require more resources.</small>
     </form>
 
+    <br>
+
+    <h3>OAuth Authentication</h3>
+    {{template "oauth_form" .}}
+
     <!-- <label for="immich-config">Immich Configuration:</label>
     <br><select name="immich-config" id="immich-config">
         <option value="manage">Manage Immich settings here, relying mainly on defaults</option>
@@ -163,7 +187,7 @@
     <!-- Really need to re-do each button to be a form to maintain functionality without JS enabled. Will worry about later, now is just testing. -->
     <!-- Upon press, button needs to become un-clickable -->
     <!-- This might be an interesting first implementation of HTMX -->
-    <p>Immich Status: <a href="http://immich.local" target="_blank" id="status" hx-get="/status" hx-trigger="load, every 10s"></a></p>
+    <h3>Immich Status: <a href="http://immich.local" target="_blank" id="status" hx-get="/status" hx-trigger="load, every 10s"></a></h3>
     <button id="stopButton" onclick="submitPost('stop')">Stop</button>
     <button id="startButton" onclick="submitPost('start')">Start</button>
     <button id="updateButton" onclick="submitPost('update')">Update</button>

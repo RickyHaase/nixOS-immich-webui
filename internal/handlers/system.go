@@ -37,7 +37,7 @@ func (h *SystemHandler) HandleRoot(w http.ResponseWriter, r *http.Request) {
 	// Convert to old format for template compatibility
 	cfg := cfgJSON.ToNixConfig()
 
-	tmpl, err := htmltemplate.ParseFS(h.templates, "web/index.html")
+	tmpl, err := htmltemplate.ParseFS(h.templates, "web/index.html", "web/oauth_form.html")
 	if err != nil {
 		slog.Error("| Error rendering template |", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -38,7 +38,14 @@ type NixConfig struct {
 	CloudflaredTokenSet  bool
 	Email                string
 	EmailPass            bool
-	MLModel      string
+	MLModel              string
+	OAuthEnabled         bool
+	PasswordLoginEnabled bool
+	OAuthClientId        string
+	OAuthClientSecret    string
+	OAuthClientSecretSet bool
+	OAuthIssuerUrl       string
+	OAuthPublicDomain    string
 }
 
 // ToNixConfig converts ConfigVariables to NixConfig structure for template compatibility
@@ -59,11 +66,24 @@ func (cv *ConfigVariables) ToNixConfig() *NixConfig {
 		EmailPass:           false,
 	}
 
-	// Email fields and ML model are managed separately - get them from immich-config.json for template compatibility
+	// Email fields, ML model, and OAuth are managed separately - get them from immich-config.json for template compatibility
 	if immich, err := GetImmichConfig(); err == nil {
 		nixConfig.Email = immich.Notifications.SMTP.Transport.Username
 		nixConfig.EmailPass = immich.Notifications.SMTP.Transport.Password != ""
 		nixConfig.MLModel = immich.MachineLearning.Clip.ModelName
+		nixConfig.OAuthEnabled = immich.OAuth.Enabled
+		nixConfig.PasswordLoginEnabled = immich.PasswordLogin.Enabled
+		nixConfig.OAuthClientId = immich.OAuth.ClientId
+		nixConfig.OAuthClientSecret = immich.OAuth.ClientSecret
+		nixConfig.OAuthClientSecretSet = immich.OAuth.ClientSecret != ""
+		nixConfig.OAuthIssuerUrl = immich.OAuth.IssuerUrl
+		// Derive public domain from externalDomain (strip https:// prefix if present)
+		nixConfig.OAuthPublicDomain = immich.Server.ExternalDomain
+		if len(nixConfig.OAuthPublicDomain) > 8 && nixConfig.OAuthPublicDomain[:8] == "https://" {
+			nixConfig.OAuthPublicDomain = nixConfig.OAuthPublicDomain[8:]
+		} else if len(nixConfig.OAuthPublicDomain) > 7 && nixConfig.OAuthPublicDomain[:7] == "http://" {
+			nixConfig.OAuthPublicDomain = nixConfig.OAuthPublicDomain[7:]
+		}
 	}
 
 	return nixConfig
@@ -73,6 +93,8 @@ func (cv *ConfigVariables) ToNixConfig() *NixConfig {
 type ImmichConfig struct {
 	Backup          Backup          `json:"backup"`
 	Notifications   Notifications   `json:"notifications"`
+	PasswordLogin   PasswordLogin   `json:"passwordLogin"`
+	OAuth           OAuth           `json:"oauth"`
 	Server          Server          `json:"server"`
 	StorageTemplate StorageTemplate `json:"storageTemplate"`
 	MachineLearning MachineLearning `json:"machineLearning"`
@@ -110,6 +132,30 @@ type Transport struct {
 	Password   string `json:"password"`
 	Port       int16  `json:"port"`
 	Username   string `json:"username"`
+}
+
+// PasswordLogin configuration for Immich
+type PasswordLogin struct {
+	Enabled bool `json:"enabled"`
+}
+
+// OAuth configuration for Immich
+type OAuth struct {
+	AutoLaunch              bool   `json:"autoLaunch"`
+	AutoRegister            bool   `json:"autoRegister"`
+	ButtonText              string `json:"buttonText"`
+	ClientId                string `json:"clientId"`
+	ClientSecret            string `json:"clientSecret"`
+	DefaultStorageQuota     *int   `json:"defaultStorageQuota"`
+	Enabled                 bool   `json:"enabled"`
+	IssuerUrl               string `json:"issuerUrl"`
+	MobileOverrideEnabled   bool   `json:"mobileOverrideEnabled"`
+	MobileRedirectUri       string `json:"mobileRedirectUri"`
+	Scope                   string `json:"scope"`
+	SigningAlgorithm        string `json:"signingAlgorithm"`
+	ProfileSigningAlgorithm string `json:"profileSigningAlgorithm"`
+	StorageLabelClaim       string `json:"storageLabelClaim"`
+	StorageQuotaClaim       string `json:"storageQuotaClaim"`
 }
 
 // Server configuration for Immich

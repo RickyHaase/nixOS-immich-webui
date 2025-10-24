@@ -34,7 +34,7 @@ Have a "functional" web UI that can display the currently applied NixOS config (
   - [x] Complete documentation for full server setup and binary build (double check behind Claude Code)
   - [x] Add systemd service to system.nix for nixmich binary
   - [x] Add cloudflared (remoteaccess.nix) along with UI for configuring
-  - [ ] Add OAuth support (immich-config.json) along with UI for configuring
+  - [x] Add OAuth support (immich-config.json) along with UI for configuring
 - [ ] v0.1.0-aplha.4
   - [ ] Small UI refresh with loading/progress bars and such to make it minimally usable
   - [ ] Add unit tests

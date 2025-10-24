@@ -20,8 +20,28 @@
       }
     }
   },
+  "passwordLogin": {
+    "enabled": true
+  },
+  "oauth": {
+    "autoLaunch": false,
+    "autoRegister": true,
+    "buttonText": "Login with Cloudflare OAuth",
+    "clientId": "another-test-client",
+    "clientSecret": "test-secret-1234567890abcdef",
+    "defaultStorageQuota": null,
+    "enabled": true,
+    "issuerUrl": "https://another.cloudflareaccess.com",
+    "mobileOverrideEnabled": false,
+    "mobileRedirectUri": "https://immich.another.com/api/oauth/mobile-redirect",
+    "scope": "openid email profile",
+    "signingAlgorithm": "RS256",
+    "profileSigningAlgorithm": "none",
+    "storageLabelClaim": "email",
+    "storageQuotaClaim": "immich_quota"
+  },
   "server": {
-    "externalDomain": "http://immich.local",
+    "externalDomain": "https://immich.another.com",
     "loginPageMessage": "Admin Panel at http://immich.local:8080",
     "publicUsers": true
   },

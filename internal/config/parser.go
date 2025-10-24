@@ -198,6 +198,78 @@ func SetMLModel(modelName string) error {
 	return switchImmichConfigJSON()
 }
 
+// SetOAuthConfig updates the Immich OAuth configuration
+func SetOAuthConfig(enabled bool, passwordLogin bool, clientId, clientSecret, issuerUrl, publicDomain string) error {
+	immichConfigMu.Lock()
+	defer immichConfigMu.Unlock()
+
+	slog.Debug("SetOAuthConfig()", "enabled", enabled, "passwordLogin", passwordLogin, "clientIdLength", len(clientId))
+
+	immichConfig, err := getImmichConfigUnsafe()
+	if err != nil {
+		slog.Debug("Error reading immich config file", "err", err)
+		return err
+	}
+
+	// Set user-provided OAuth fields
+	immichConfig.OAuth.Enabled = enabled
+	immichConfig.OAuth.ClientId = clientId
+	immichConfig.OAuth.IssuerUrl = issuerUrl
+
+	// Preserve existing client secret if submitted value is empty and OAuth is enabled
+	if clientSecret != "" {
+		immichConfig.OAuth.ClientSecret = clientSecret
+	}
+
+	// Set fixed OAuth fields (not user-editable)
+	immichConfig.OAuth.AutoLaunch = false
+	immichConfig.OAuth.AutoRegister = true
+	immichConfig.OAuth.ButtonText = "Login with Cloudflare OAuth"
+	immichConfig.OAuth.DefaultStorageQuota = nil
+	immichConfig.OAuth.MobileOverrideEnabled = false
+	immichConfig.OAuth.Scope = "openid email profile"
+	immichConfig.OAuth.SigningAlgorithm = "RS256"
+	immichConfig.OAuth.ProfileSigningAlgorithm = "none"
+	immichConfig.OAuth.StorageLabelClaim = "email"
+	immichConfig.OAuth.StorageQuotaClaim = "immich_quota"
+
+	// Derive mobileRedirectUri and externalDomain from public domain
+	if enabled && publicDomain != "" {
+		immichConfig.OAuth.MobileRedirectUri = "https://" + publicDomain + "/api/oauth/mobile-redirect"
+		immichConfig.Server.ExternalDomain = "https://" + publicDomain
+	} else {
+		// OAuth disabled - clear derived fields and set default externalDomain
+		immichConfig.OAuth.MobileRedirectUri = ""
+		immichConfig.Server.ExternalDomain = "http://immich.local"
+	}
+
+	// Password login logic: MUST be true if OAuth is disabled
+	if !enabled {
+		immichConfig.PasswordLogin.Enabled = true
+		slog.Debug("OAuth disabled - forcing passwordLogin to true")
+	} else {
+		immichConfig.PasswordLogin.Enabled = passwordLogin
+		slog.Debug("OAuth enabled - passwordLogin set to user preference", "passwordLogin", passwordLogin)
+	}
+
+	b, err := json.MarshalIndent(immichConfig, "", "  ")
+	if err != nil {
+		slog.Debug("Error generating JSON", "err", err)
+		return err
+	}
+
+	slog.Debug(string(b))
+
+	fileName := TankImmich + ImmichConfigFile + TempSuffix
+
+	if err := os.WriteFile(fileName, b, 0644); err != nil {
+		slog.Debug("Error writing to file:", "err", err)
+		return err
+	}
+
+	return switchImmichConfigJSON()
+}
+
 // SaveConfigJSON writes ConfigVariables to JSON file with .tmp extension
 func SaveConfigJSON(cfg *ConfigVariables) error {
 	nixConfigMu.Lock()

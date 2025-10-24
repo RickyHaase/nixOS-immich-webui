@@ -186,3 +186,100 @@ func (h *ImmichHandler) HandleMLModelPost(w http.ResponseWriter, r *http.Request
 		return
 	}
 }
+
+// HandleOAuthPost processes OAuth configuration updates
+func (h *ImmichHandler) HandleOAuthPost(w http.ResponseWriter, r *http.Request) {
+	slog.Info("Received OAuth Post")
+
+	err := r.ParseForm()
+	if err != nil {
+		slog.Error("| Error parsing OAuth form submission |", "err", err)
+		http.Error(w, "Failed to parse form data", http.StatusBadRequest)
+		return
+	}
+
+	// Extract form values
+	oauthEnabled := config.ParseBool(r.FormValue("oauth-enabled"))
+	passwordLogin := config.ParseBool(r.FormValue("password-login"))
+	clientId := r.FormValue("oauth-client-id")
+	clientSecret := r.FormValue("oauth-client-secret")
+	issuerUrl := r.FormValue("oauth-issuer-url")
+	publicDomain := r.FormValue("oauth-public-domain")
+
+	// Validate inputs
+	if err := config.ValidateOAuthClientId(clientId, oauthEnabled); err != nil {
+		slog.Error("| Invalid OAuth client ID |", "err", err)
+		http.Error(w, fmt.Sprintf("Validation error: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	if err := config.ValidateOAuthClientSecret(clientSecret, oauthEnabled); err != nil {
+		slog.Error("| Invalid OAuth client secret |", "err", err)
+		http.Error(w, fmt.Sprintf("Validation error: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	if err := config.ValidateOAuthIssuerUrl(issuerUrl, oauthEnabled); err != nil {
+		slog.Error("| Invalid OAuth issuer URL |", "err", err)
+		http.Error(w, fmt.Sprintf("Validation error: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	if err := config.ValidatePublicDomain(publicDomain, oauthEnabled); err != nil {
+		slog.Error("| Invalid public domain |", "err", err)
+		http.Error(w, fmt.Sprintf("Validation error: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Apply OAuth configuration
+	if err := config.SetOAuthConfig(oauthEnabled, passwordLogin, clientId, clientSecret, issuerUrl, publicDomain); err != nil {
+		slog.Error("| Failed to set OAuth config |", "err", err)
+		http.Error(w, "Failed to set OAuth config.", http.StatusInternalServerError)
+		return
+	}
+
+	// Get current OAuth settings from immich-config.json
+	immich, err := config.GetImmichConfig()
+	if err != nil {
+		slog.Error("| Error parsing immich-config.json |", "err", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Create struct for template data
+	oauthData := struct {
+		OAuthEnabled         bool
+		PasswordLoginEnabled bool
+		OAuthClientId        string
+		OAuthClientSecretSet bool
+		OAuthIssuerUrl       string
+		OAuthPublicDomain    string
+	}{
+		OAuthEnabled:         immich.OAuth.Enabled,
+		PasswordLoginEnabled: immich.PasswordLogin.Enabled,
+		OAuthClientId:        immich.OAuth.ClientId,
+		OAuthClientSecretSet: immich.OAuth.ClientSecret != "",
+		OAuthIssuerUrl:       immich.OAuth.IssuerUrl,
+		OAuthPublicDomain:    immich.Server.ExternalDomain,
+	}
+
+	// Strip https:// prefix from externalDomain for display
+	if len(oauthData.OAuthPublicDomain) > 8 && oauthData.OAuthPublicDomain[:8] == "https://" {
+		oauthData.OAuthPublicDomain = oauthData.OAuthPublicDomain[8:]
+	} else if len(oauthData.OAuthPublicDomain) > 7 && oauthData.OAuthPublicDomain[:7] == "http://" {
+		oauthData.OAuthPublicDomain = oauthData.OAuthPublicDomain[7:]
+	}
+
+	tmpl, err := htmltemplate.ParseFS(h.templates, "web/index.html", "web/oauth_form.html")
+	if err != nil {
+		slog.Error("| Error parsing OAuth form template |", "err", err)
+		http.Error(w, "Failed to render OAuth form", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tmpl.ExecuteTemplate(w, "oauth_form", oauthData); err != nil {
+		slog.Error("| Error executing OAuth form template |", "err", err)
+		http.Error(w, "Failed to render OAuth form", http.StatusInternalServerError)
+		return
+	}
+}
