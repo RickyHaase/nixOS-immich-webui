@@ -15,5 +15,8 @@
       "enable": false,
       "token": ""
     }
+  },
+  "ente": {
+    "enable": false
   }
 }

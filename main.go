@@ -28,6 +28,7 @@ func main() {
 	systemHandler := handlers.NewSystemHandler(templates.FS)
 	immichHandler := handlers.NewImmichHandler(templates.FS)
 	backupHandler := handlers.NewBackupHandler(templates.FS, backupService)
+	enteHandler := handlers.NewEnteHandler(templates.FS)
 
 	// Setup HTTP routes
 	mux := http.NewServeMux()
@@ -53,6 +54,14 @@ func main() {
 	mux.HandleFunc("GET /disks", backupHandler.HandleGetDisks)
 	mux.HandleFunc("POST /backup", backupHandler.HandleBackup)
 	mux.HandleFunc("GET /backupstatus", backupHandler.HandleGetBackupStatus)
+
+	// Ente routes
+	mux.HandleFunc("GET /ente", enteHandler.HandleEntePage)
+	mux.HandleFunc("GET /ente-status", enteHandler.HandleEnteStatus)
+	mux.HandleFunc("POST /ente-start", enteHandler.HandleEnteStart)
+	mux.HandleFunc("POST /ente-stop", enteHandler.HandleEnteStop)
+	mux.HandleFunc("POST /ente-restart", enteHandler.HandleEnteRestart)
+	mux.HandleFunc("POST /ente-toggle", enteHandler.HandleEnteToggle)
 
 	slog.Info("Server started at http://localhost:8000")
 	if err := http.ListenAndServe("localhost:8000", mux); err != nil {

@@ -21,6 +21,9 @@ In your `/etc/nixos/configuration.nix` file, add the following imports to the `i
     ./networking.nix
     ./immich.nix
     ./remoteaccess.nix
+    ./garage.nix
+    ./garage-setup.nix
+    ./ente.nix
   ];
 }
 ```

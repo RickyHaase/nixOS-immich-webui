@@ -1,0 +1,35 @@
+{{define "ente_status"}}
+<div id="ente-status-panel"{{if .EnteEnabled}} hx-get="/ente-status" hx-trigger="every 10s" hx-swap="outerHTML"{{end}}>
+    <h3>Service Status</h3>
+
+    <p>
+        Ente Museum:
+        <span class="status-badge {{if eq .EnteStatus "Running"}}status-running{{else if eq .EnteStatus "Stopped"}}status-stopped{{else if eq .EnteStatus "Disabled"}}status-disabled{{else}}status-unknown{{end}}">{{.EnteStatus}}</span>
+    </p>
+    <p>
+        Garage S3:
+        <span class="status-badge {{if eq .GarageStatus "Running"}}status-running{{else if eq .GarageStatus "Stopped"}}status-stopped{{else if eq .GarageStatus "Disabled"}}status-disabled{{else}}status-unknown{{end}}">{{.GarageStatus}}</span>
+    </p>
+
+    {{if .EnteEnabled}}
+    <form style="display:inline">
+        <button type="button" onclick="enteAction('start')">Start</button>
+        <button type="button" onclick="enteAction('stop')">Stop</button>
+        <button type="button" onclick="enteAction('restart')">Restart</button>
+    </form>
+    <script>
+    function enteAction(action) {
+        fetch('/ente-' + action, {
+            method: 'POST'
+        }).then(response => {
+            if (response.ok) {
+                alert(action.charAt(0).toUpperCase() + action.slice(1) + ' request submitted successfully.');
+            } else {
+                response.text().then(text => alert('Failed to ' + action + ' Ente: ' + text));
+            }
+        });
+    }
+    </script>
+    {{end}}
+</div>
+{{end}}

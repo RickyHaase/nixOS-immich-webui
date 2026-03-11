@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ente Admin - nixmich webui</title>
+    <style>
+        .hidden {
+            display: none;
+        }
+
+        body {
+            max-width: 900px;
+            margin: 12px;
+            line-height: 1.4;
+        }
+
+        input, select, button {
+            padding: 5px 8px;
+            margin: 0px 0;
+            font-size: 14px;
+        }
+
+        button {
+            cursor: pointer;
+            margin-right: 6px;
+        }
+
+        label {
+            display: inline-block;
+            margin-top: 8px;
+            margin-bottom: 2px;
+        }
+
+        form {
+            margin-bottom: 12px;
+        }
+
+        h2 {
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+
+        h3 {
+            margin-top: 8px;
+            margin-bottom: 6px;
+        }
+
+        hr {
+            margin: 16px 0;
+            border: none;
+            border-top: 1px solid #ddd;
+        }
+
+        small {
+            display: block;
+            margin-top: 1px;
+            margin-bottom: 3px;
+            color: #666;
+        }
+
+        nav {
+            margin-bottom: 16px;
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        nav a {
+            margin-right: 12px;
+            text-decoration: none;
+            color: #0066cc;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .placeholder-panel {
+            border: 1px dashed #ccc;
+            padding: 12px 16px;
+            margin: 8px 0;
+            color: #888;
+            background: #fafafa;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .status-running { color: #2e7d32; }
+        .status-stopped { color: #c62828; }
+        .status-disabled { color: #757575; }
+        .status-unknown { color: #e65100; }
+    </style>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+<body>
+    <h1>nixmich web UI - v0.1.0-alpha3</h1>
+
+    <nav>
+        <a href="/">Main</a>
+        <a href="/config">Configuration</a>
+        <a href="/ente">Ente</a>
+    </nav>
+
+    <h2>Ente Photos - Admin Panel</h2>
+    <small>Self-hosted, end-to-end encrypted photo storage powered by Ente Museum.</small>
+
+    <hr>
+
+    <h3>Service Configuration</h3>
+    <form action="/ente-toggle" method="post">
+        <label for="ente-enable">Ente Service:</label>
+        <select name="ente-enable" id="ente-enable">
+            <option value="true" {{if .EnteEnabled}}selected{{end}}>Enabled</option>
+            <option value="false" {{if not .EnteEnabled}}selected{{end}}>Disabled</option>
+        </select>
+        <button type="submit" hx-post="/ente-toggle" hx-confirm="This will run nixos-rebuild to enable/disable Ente. Continue?">Apply</button>
+        <br><small>Enabling Ente will configure and start the Museum API server, Garage S3 storage, and PostgreSQL database via NixOS. Secrets are auto-generated on first run.</small>
+    </form>
+
+    <hr>
+
+    {{template "ente_status" .}}
+
+    <hr>
+
+    <h2>Admin Controls</h2>
+
+    <h3>User Management</h3>
+    <div class="placeholder-panel">
+        Coming soon — Add, list, and manage Ente users from this panel.
+    </div>
+
+    <h3>Storage Usage</h3>
+    <div class="placeholder-panel">
+        Coming soon — View Garage S3 bucket statistics and storage consumption.
+    </div>
+
+    <h3>Registration Settings</h3>
+    <div class="placeholder-panel">
+        Coming soon — Enable/disable new user registration and configure invite-only mode.
+    </div>
+
+</body>
+</html>
