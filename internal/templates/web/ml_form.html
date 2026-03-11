@@ -1,12 +1,18 @@
-    <form id="ml-form" action="/mlmodel" method="post">
-        {{if .Saved}}<div id="ml-success" style="color: green; margin-bottom: 8px; transition: opacity 0.5s;">Saved successfully</div>
-        <script>setTimeout(function() { var el = document.getElementById('ml-success'); if(el) { el.style.opacity = '0'; setTimeout(function() { el.remove(); }, 500); } }, 3000);</script>{{end}}
-        <label for="ml-model">CLIP Model:</label>
-        <select name="ml-model" id="ml-model">
-            <option value="ViT-B-32__openai" {{if eq .ModelName "ViT-B-32__openai"}}selected{{end}}>Default (ViT-B-32__openai)</option>
-            <option value="ViT-B-16-SigLIP__webli" {{if eq .ModelName "ViT-B-16-SigLIP__webli"}}selected{{end}}>Improved (ViT-B-16-SigLIP__webli)</option>
-            <option value="ViT-SO400M-14-SigLIP-384__webli" {{if eq .ModelName "ViT-SO400M-14-SigLIP-384__webli"}}selected{{end}}>Beefy (ViT-SO400M-14-SigLIP-384__webli)</option>
+{{define "ml_form"}}
+<form id="ml-form" action="/mlmodel" method="post">
+    {{if .Saved}}
+    <div id="ml-success" class="alert alert-success" style="margin-bottom: 10px; transition: opacity 0.5s;">Saved successfully</div>
+    <script>setTimeout(function() { var el = document.getElementById('ml-success'); if(el) { el.style.opacity = '0'; setTimeout(function() { el.remove(); }, 500); } }, 3000);</script>
+    {{end}}
+    <div class="form-group">
+        <label class="form-label" for="ml-model">CLIP Model</label>
+        <select name="ml-model" id="ml-model" class="form-select">
+            <option value="ViT-B-32__openai" {{if eq .MLModel "ViT-B-32__openai"}}selected{{end}}>Default (ViT-B-32__openai)</option>
+            <option value="ViT-B-16-SigLIP__webli" {{if eq .MLModel "ViT-B-16-SigLIP__webli"}}selected{{end}}>Improved (ViT-B-16-SigLIP__webli)</option>
+            <option value="ViT-SO400M-14-SigLIP-384__webli" {{if eq .MLModel "ViT-SO400M-14-SigLIP-384__webli"}}selected{{end}}>Beefy (ViT-SO400M-14-SigLIP-384__webli)</option>
         </select>
-        <button type="submit" hx-post="/mlmodel" hx-target="#ml-form">Submit</button>
-        <br><small>Select the machine learning model for image recognition. Higher quality models require more resources.</small>
-    </form>
+        <small>Higher quality models require more resources.</small>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm" hx-post="/mlmodel" hx-target="#ml-form" hx-swap="outerHTML">Save</button>
+</form>
+{{end}}

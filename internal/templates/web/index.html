@@ -1,179 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>nixmich webui</title>
-    <style>
-        .hidden {
-            display: none;
-        }
-
-
-        body {
-            max-width: 900px;
-            margin: 12px;
-            line-height: 1.4;
-        }
-
-        input, select, button {
-            padding: 5px 8px;
-            margin: 0px 0;
-            font-size: 14px;
-        }
-
-        input[type="text"],
-        input[type="email"],
-        input[type="password"],
-        input[type="url"],
-        input[type="time"],
-        select {
-            min-width: 250px;
-        }
-
-        button {
-            cursor: pointer;
-            margin-right: 6px;
-        }
-
-        label {
-            display: inline-block;
-            margin-top: 8px;
-            margin-bottom: 2px;
-        }
-
-        form {
-            margin-bottom: 12px;
-        }
-
-        h2 {
-            margin-top: 16px;
-            margin-bottom: 8px;
-        }
-
-        h3 {
-            margin-top: 8px;
-            margin-bottom: 6px;
-        }
-
-        hr {
-            margin: 16px 0;
-            border: none;
-            border-top: 1px solid #ddd;
-        }
-
-        small {
-            display: block;
-            margin-top: 1px;
-            margin-bottom: 3px;
-            color: #666;
-        }
-
-        nav {
-            margin-bottom: 16px;
-            padding: 8px 0;
-            border-bottom: 1px solid #ddd;
-        }
-
-        nav a {
-            margin-right: 12px;
-            text-decoration: none;
-            color: #0066cc;
-        }
-
-        nav a:hover {
-            text-decoration: underline;
-        }
-    </style>
-    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    {{template "head" .}}
+    <title>Dashboard — nixmich</title>
 </head>
-<body>
-    <h1>nixmich web UI - v0.1.0-alpha3</h1>
+<body class="app-shell">
 
-    <nav>
-        <a href="/">Main</a>
-        <a href="/config">Configuration</a>
-    </nav>
+{{template "topbar" .}}
 
+<main class="page-content">
 
-    <h2>Immich Container Management</h2>
-    <!-- Need to change status update on page load to be rendered server-side to provide atleat minimal functionality to non-JS clients -->
-    <!-- Really need to re-do each button to be a form to maintain functionality without JS enabled. Will worry about later, now is just testing. -->
-    <!-- Upon press, button needs to become un-clickable -->
-    <!-- This might be an interesting first implementation of HTMX -->
-    <h3>Immich Status: <a href="http://immich.local" target="_blank" id="status" hx-get="/status" hx-trigger="load, every 10s"></a></h3>
-    <button id="stopButton" onclick="submitPost('stop')">Stop</button>
-    <button id="startButton" onclick="submitPost('start')">Start</button>
-    <button id="updateButton" onclick="submitPost('update')">Update</button>
-    <script> // Not sure if I want to do inline scripts like this or keep in header... either way, this stuff should likely be changed to HTMX
-    function submitPost(action) {
-        document.getElementById('status').innerHTML = 'Loading...';
+    <!-- Immich Container Management -->
+    <div class="card">
+        <h2 class="card-title">Immich Container</h2>
 
-        fetch(`/${action}`, {
-            method: 'POST'
-        }).then(response => {
-            if (response.ok) {
-                alert(`${action.charAt(0).toUpperCase() + action.slice(1)} request submitted successfully.`);
-            } else {
-                alert(`Failed to ${action} immich.`);
-            }
-            fetchStatus();
-        });
-    }
-    </script>
-
-    <hr>
-
-    <!-- End of currently functional elements -->
-
-    <h2>Backup to USB</h2>
-    <form id="backup-form">
-        <label for="select-disk">Select Disk:</label>
-        <select name="select-disk" id="select-disk" hx-get="/disks" hx-trigger="load">
-            <option>Loading disks...</option>
-        </select>
-        <input type="checkbox" name="verify-backup" id="verify-backup" value="true">
-        <label for="verify-backup">Verify backup integrity with checksums</label>
-        <br><small>Uses file checksums to ensure bit-for-bit accuracy. Significantly slower but ensures perfect integrity.</small>
-        <br>
-        <button id="refresh" type="button" hx-get="/disks" hx-target="#select-disk" hx-swap="innerHTML">Refresh List</button>
-        <button id="start-backup" type="submit" hx-post="/backup" hx-target="#backup-result" hx-confirm="Are you sure you want to start the backup? This may take some time.">Start Backup</button>
-        <br><small>Select backup disk from list. In order for a disk to be eligible, it must be connected via USB and have a partition formatted exFAT.</small>
-
-        <!-- Backup result message (shows "Backup Started!" when backup begins) -->
-        <div id="backup-result"></div>
-
-        <!-- Backup status - loads once, then polling controlled by response -->
-        <div id="backup-status" hx-get="/backupstatus" hx-trigger="load" hx-swap="innerHTML">
-            <!-- Status will be loaded here -->
+        <div class="form-group">
+            <span class="form-label">Status</span>
+            <a href="http://immich.local" target="_blank" id="status"
+               hx-get="/status" hx-trigger="load, every 10s"
+               style="font-weight: 500; color: var(--color-primary-500);">Loading&#8230;</a>
         </div>
-    </form>
-    <hr>
-    <h2>Server Commands</h2>
-    <button onclick="powerAction('poweroff')">Poweroff</button>
-    <button onclick="powerAction('reboot')">Restart</button>
-    <script>
-    function powerAction(action) {
-      const actionText = action === 'reboot' ? 'reboot' : 'poweroff';
-      const confirmMessage = action === 'reboot'
-        ? "This will reboot the server. It will take a minute or two before services become available again."
-        : "This will poweroff the server. You will have to physically press the power button to turn the server back on.";
 
-      if (confirm(confirmMessage)) {
-        fetch(`/${action}`, {
-          method: 'POST'
-        }).then(response => {
-          if (response.ok) {
-            alert(`${actionText.charAt(0).toUpperCase() + actionText.slice(1)} request submitted successfully.`);
-          } else {
-            alert(`Failed to ${actionText} the server.`);
-          }
-        });
-      }
-    }
-    </script>
-    <!-- <button>Update</button> -->
-    <!-- <br><small>Does nothing at this time - just placeholders</small> -->
+        <div class="btn-group">
+            <button class="btn btn-secondary" onclick="submitPost('stop')">Stop</button>
+            <button class="btn btn-primary" onclick="submitPost('start')">Start</button>
+            <button class="btn btn-ghost" onclick="submitPost('update')">Update</button>
+        </div>
 
+        <script>
+        function submitPost(action) {
+            document.getElementById('status').textContent = 'Loading\u2026';
+            fetch('/' + action, { method: 'POST' }).then(function(response) {
+                var label = action.charAt(0).toUpperCase() + action.slice(1);
+                if (response.ok) {
+                    alert(label + ' request submitted successfully.');
+                } else {
+                    alert('Failed to ' + action + ' Immich.');
+                }
+            });
+        }
+        </script>
+    </div>
+
+    <!-- Backup to USB -->
+    <div class="card">
+        <h2 class="card-title">Backup to USB</h2>
+
+        <form id="backup-form">
+            <div class="form-group">
+                <label class="form-label" for="select-disk">Destination Disk</label>
+                <select name="select-disk" id="select-disk" class="form-select"
+                        hx-get="/disks" hx-trigger="load">
+                    <option>Loading disks&#8230;</option>
+                </select>
+                <small>Disk must be connected via USB with an exFAT-formatted partition.</small>
+            </div>
+
+            <div class="checkbox-row">
+                <input type="checkbox" name="verify-backup" id="verify-backup" value="true">
+                <div>
+                    <label class="form-label" for="verify-backup">Verify backup integrity with checksums</label>
+                    <small>Significantly slower but ensures bit-for-bit accuracy.</small>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button id="refresh" type="button" class="btn btn-secondary btn-sm"
+                        hx-get="/disks" hx-target="#select-disk" hx-swap="innerHTML">
+                    Refresh List
+                </button>
+                <button id="start-backup" type="submit" class="btn btn-primary btn-sm"
+                        hx-post="/backup" hx-target="#backup-result"
+                        hx-confirm="Are you sure you want to start the backup? This may take some time.">
+                    Start Backup
+                </button>
+            </div>
+
+            <!-- Backup result message -->
+            <div id="backup-result"></div>
+
+            <!-- Backup status — loads once, polling controlled by response -->
+            <div id="backup-status"
+                 hx-get="/backupstatus" hx-trigger="load" hx-swap="innerHTML">
+            </div>
+        </form>
+    </div>
+
+    <!-- Server Commands -->
+    <div class="card">
+        <h2 class="card-title">Server Commands</h2>
+        <div class="btn-group">
+            <button class="btn btn-danger" onclick="powerAction('poweroff')">Poweroff</button>
+            <button class="btn btn-warning" onclick="powerAction('reboot')">Restart</button>
+        </div>
+
+        <script>
+        function powerAction(action) {
+            var actionText = action === 'reboot' ? 'reboot' : 'poweroff';
+            var confirmMessage = action === 'reboot'
+                ? 'This will reboot the server. It will take a minute or two before services become available again.'
+                : 'This will poweroff the server. You will have to physically press the power button to turn the server back on.';
+            if (confirm(confirmMessage)) {
+                fetch('/' + action, { method: 'POST' }).then(function(response) {
+                    var label = actionText.charAt(0).toUpperCase() + actionText.slice(1);
+                    if (response.ok) {
+                        alert(label + ' request submitted successfully.');
+                    } else {
+                        alert('Failed to ' + actionText + ' the server.');
+                    }
+                });
+            }
+        }
+        </script>
+    </div>
+
+</main>
 </body>
 </html>

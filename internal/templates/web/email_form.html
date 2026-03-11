@@ -1,9 +1,20 @@
-    <form id="email-form" action="/email" method="post">
-        {{if .Saved}}<div id="email-success" style="color: green; margin-bottom: 8px; transition: opacity 0.5s;">Saved successfully</div>
-        <script>setTimeout(function() { var el = document.getElementById('email-success'); if(el) { el.style.opacity = '0'; setTimeout(function() { el.remove(); }, 500); } }, 3000);</script>{{end}}
-        <label for="gmail-address">Gmail Address:</label>
-        <input type="email" id="gmail-address" name="gmail-address" placeholder="example@gmail.com" value="{{if .Email}}{{.Email}}{{else}}{{end}}">        <label for="gmail-password">Gmail App Password:</label>
-        <input type="password" id="gmail-password" name="gmail-password" placeholder="{{if .EmailPass}}password is set{{else}}fded beid aibr kxps{{end}}">
-        <button type="submit" hx-post="/email" hx-target="#email-form">Submit</button>
-        <br><small>Use your gmail account with an <a href="https://support.google.com/mail/answer/185833">app password</a> to allow for immich to send emails</small>
-    </form>
+{{define "email_form"}}
+<form id="email-form" action="/email" method="post">
+    {{if .Saved}}
+    <div id="email-success" class="alert alert-success" style="margin-bottom: 10px; transition: opacity 0.5s;">Saved successfully</div>
+    <script>setTimeout(function() { var el = document.getElementById('email-success'); if(el) { el.style.opacity = '0'; setTimeout(function() { el.remove(); }, 500); } }, 3000);</script>
+    {{end}}
+    <div class="form-group">
+        <label class="form-label" for="gmail-address">Gmail Address</label>
+        <input type="email" id="gmail-address" name="gmail-address" class="form-input"
+               placeholder="example@gmail.com" value="{{if .Email}}{{.Email}}{{end}}">
+    </div>
+    <div class="form-group">
+        <label class="form-label" for="gmail-password">Gmail App Password</label>
+        <input type="password" id="gmail-password" name="gmail-password" class="form-input"
+               placeholder="{{if .EmailPass}}password is set{{else}}fded beid aibr kxps{{end}}">
+        <small>Use an <a href="https://support.google.com/mail/answer/185833">app password</a> to allow Immich to send emails.</small>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm" hx-post="/email" hx-target="#email-form" hx-swap="outerHTML">Save</button>
+</form>
+{{end}}

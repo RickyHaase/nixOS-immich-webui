@@ -31,6 +31,7 @@
 !internal/templates/web/*.html
 internal/templates/web/backup_config.html
 internal/templates/web/backup_dashboard.html
+!internal/templates/web/static/*.css
 #!internal/templates/immich/immich-config.json
 
 !test/nixos/nixconfig.json

@@ -1,50 +1,54 @@
 {{define "oauth_form"}}
-    <form id="oauth-form" action="/oauth" method="post">
-        {{if .Saved}}<div id="oauth-success" style="color: green; margin-bottom: 8px; transition: opacity 0.5s;">Saved successfully</div>
-        <script>setTimeout(function() { var el = document.getElementById('oauth-success'); if(el) { el.style.opacity = '0'; setTimeout(function() { el.remove(); }, 500); } }, 3000);</script>{{end}}
-        <label for="oauth-enabled">OAuth Authentication:</label>
-        <select name="oauth-enabled" id="oauth-enabled">
+<form id="oauth-form" action="/oauth" method="post">
+    {{if .Saved}}
+    <div id="oauth-success" class="alert alert-success" style="margin-bottom: 10px; transition: opacity 0.5s;">Saved successfully</div>
+    <script>setTimeout(function() { var el = document.getElementById('oauth-success'); if(el) { el.style.opacity = '0'; setTimeout(function() { el.remove(); }, 500); } }, 3000);</script>
+    {{end}}
+
+    <div class="form-group">
+        <label class="form-label" for="oauth-enabled">OAuth Authentication</label>
+        <select name="oauth-enabled" id="oauth-enabled" class="form-select">
             <option value="true" {{if .OAuthEnabled}}selected{{end}}>Enabled</option>
             <option value="false" {{if not .OAuthEnabled}}selected{{end}}>Disabled</option>
         </select>
-        <br><small><strong>Warning:</strong> This requires complex Cloudflare configuration. Read the docs thoroughly before enabling.</small>
+        <small><strong>Warning:</strong> Requires complex Cloudflare configuration. Read the docs thoroughly before enabling.</small>
+    </div>
 
-
-        <br class="oauth-conditional">
-
-        <!-- Conditional fields - shown only when OAuth is enabled -->
-        <label for="password-login" class="oauth-conditional">Allow Password Login:</label>
-        <select name="password-login" id="password-login" class="oauth-conditional">
+    <!-- Conditional fields — shown only when OAuth is enabled -->
+    <div class="form-group oauth-conditional">
+        <label class="form-label" for="password-login">Allow Password Login</label>
+        <select name="password-login" id="password-login" class="form-select oauth-conditional">
             <option value="true" {{if .PasswordLoginEnabled}}selected{{end}}>Enabled</option>
             <option value="false" {{if not .PasswordLoginEnabled}}selected{{end}}>Disabled</option>
         </select>
-        <br class="oauth-conditional"><small class="oauth-conditional">Recommended: disable if exposing publicly - forces more secure OAuth authentication</small>
+        <small class="oauth-conditional">Recommended: disable if exposing publicly to force more secure OAuth authentication.</small>
+    </div>
 
-        <br class="oauth-conditional">
-        <label for="oauth-client-id" class="oauth-conditional">Client ID:</label>
-        <input type="text" id="oauth-client-id" name="oauth-client-id" class="oauth-conditional"
+    <div class="form-group oauth-conditional">
+        <label class="form-label" for="oauth-client-id">Client ID</label>
+        <input type="text" id="oauth-client-id" name="oauth-client-id" class="form-input oauth-conditional"
                value="{{.OAuthClientId}}" placeholder="Copy from Cloudflare SaaS application">
-        <br class="oauth-conditional"><small class="oauth-conditional">Copy from Cloudflare SaaS application and paste here</small>
+    </div>
 
-        <br class="oauth-conditional">
-        <label for="oauth-client-secret" class="oauth-conditional">Client Secret:</label>
-        <input type="password" id="oauth-client-secret" name="oauth-client-secret" class="oauth-conditional"
+    <div class="form-group oauth-conditional">
+        <label class="form-label" for="oauth-client-secret">Client Secret</label>
+        <input type="password" id="oauth-client-secret" name="oauth-client-secret" class="form-input oauth-conditional"
                placeholder="{{if .OAuthClientSecretSet}}client secret is set{{else}}paste secret from Cloudflare{{end}}">
-        <br class="oauth-conditional"><small class="oauth-conditional">Copy from Cloudflare SaaS application and paste here</small>
+    </div>
 
-        <br class="oauth-conditional">
-        <label for="oauth-issuer-url" class="oauth-conditional">Issuer URL:</label>
-        <input type="url" id="oauth-issuer-url" name="oauth-issuer-url" class="oauth-conditional"
+    <div class="form-group oauth-conditional">
+        <label class="form-label" for="oauth-issuer-url">Issuer URL</label>
+        <input type="url" id="oauth-issuer-url" name="oauth-issuer-url" class="form-input oauth-conditional"
                value="{{.OAuthIssuerUrl}}" placeholder="https://your-team.cloudflareaccess.com">
-        <br class="oauth-conditional"><small class="oauth-conditional">Copy from Cloudflare SaaS application and paste here</small>
+    </div>
 
-        <br class="oauth-conditional">
-        <label for="oauth-public-domain" class="oauth-conditional">Public Domain:</label>
-        <input type="text" id="oauth-public-domain" name="oauth-public-domain" class="oauth-conditional"
+    <div class="form-group oauth-conditional">
+        <label class="form-label" for="oauth-public-domain">Public Domain</label>
+        <input type="text" id="oauth-public-domain" name="oauth-public-domain" class="form-input oauth-conditional"
                value="{{.OAuthPublicDomain}}" placeholder="immich.example.com">
-        <br class="oauth-conditional"><small class="oauth-conditional">The domain configured in Cloudflare tunnels to forward to Immich</small>
+        <small class="oauth-conditional">The domain configured in Cloudflare Tunnels to forward to Immich.</small>
+    </div>
 
-        <br>
-        <button type="submit" hx-post="/oauth" hx-target="#oauth-form">Submit</button>
-    </form>
+    <button type="submit" class="btn btn-primary btn-sm" hx-post="/oauth" hx-target="#oauth-form" hx-swap="outerHTML">Save</button>
+</form>
 {{end}}

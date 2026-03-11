@@ -1,69 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirmation - nixmich webui</title>
-    <style>
-        nav {
-            margin-bottom: 16px;
-            padding: 8px 0;
-            border-bottom: 1px solid #ddd;
-        }
-
-        nav a {
-            margin-right: 12px;
-            text-decoration: none;
-            color: #0066cc;
-        }
-
-        nav a:hover {
-            text-decoration: underline;
-        }
-    </style>
+    {{template "head" .}}
+    <title>Confirm Changes — nixmich</title>
 </head>
-<body>
-    <h1>Confirmation Window</h1>
+<body class="app-shell">
 
-    <nav>
-        <a href="/">Main</a>
-        <a href="/config">Configuration</a>
-    </nav>
-    <p>The below configuration has been saved. Would you like to appy the configuration now?</p>
-    <table style="border: 1px solid; border-collapse: collapse;">
-        <tr>
-            <td style="border: 1px solid;">Time Zone</td>
-            <td style="border: 1px solid;">{{.TimeZone}}</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid;">Auto-update Enable</td>
-            <td style="border: 1px solid;">{{.AutoUpgrade}}</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid;">Update & Reboot Window</td>
-            <td style="border: 1px solid;">{{.UpgradeTime}} - {{.UpgradeUpper}}</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid;">Tailscale Enable</td>
-            <td style="border: 1px solid;">{{.Tailscale}}</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid;">TS Authkey</td>
-            <td style="border: 1px solid;">{{if .TSAuthkeySet}}***set***{{else}}(not set){{end}}</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid;">Cloudflare Tunnel Enable</td>
-            <td style="border: 1px solid;">{{.Cloudflared}}</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid;">CF Tunnel Token</td>
-            <td style="border: 1px solid;">{{if .CloudflaredTokenSet}}***set***{{else}}(not set){{end}}</td>
-        </tr>
-    </table>
-    <p>To apply, click the button below. If incorrect, feel free to hit the back button and revise. To discard, return to the <a href="/config">configuration page</a>.</p>
-    <form action="/apply" method="post">
-        <button type="submit" id="apply">Apply</button>
-    </form>
+{{template "topbar" .}}
 
+<main class="page-content">
+
+    <div class="card">
+        <h2 class="card-title">Confirm Configuration Changes</h2>
+
+        <p>Review the configuration below. Click <strong>Apply</strong> to rebuild NixOS with these settings, or go back to revise.</p>
+
+        <table class="config-table">
+            <tr>
+                <th>Time Zone</th>
+                <td>{{.TimeZone}}</td>
+            </tr>
+            <tr>
+                <th>Auto-Update Enabled</th>
+                <td>{{.AutoUpgrade}}</td>
+            </tr>
+            <tr>
+                <th>Update Window</th>
+                <td>{{.UpgradeTime}} &#8211; {{.UpgradeUpper}}</td>
+            </tr>
+            <tr>
+                <th>Tailscale Enabled</th>
+                <td>{{.Tailscale}}</td>
+            </tr>
+            <tr>
+                <th>Tailscale Auth Key</th>
+                <td>{{if .TSAuthkeySet}}<span class="badge badge-success">&#10003; Set</span>{{else}}<span class="text-muted">(not set)</span>{{end}}</td>
+            </tr>
+            <tr>
+                <th>Cloudflare Tunnel Enabled</th>
+                <td>{{.Cloudflared}}</td>
+            </tr>
+            <tr>
+                <th>Cloudflare Tunnel Token</th>
+                <td>{{if .CloudflaredTokenSet}}<span class="badge badge-success">&#10003; Set</span>{{else}}<span class="text-muted">(not set)</span>{{end}}</td>
+            </tr>
+        </table>
+
+        <div class="btn-group" style="margin-top: 20px;">
+            <form action="/apply" method="post" style="display: inline;">
+                <button type="submit" class="btn btn-primary">Apply Configuration</button>
+            </form>
+            <a href="/config" class="btn btn-secondary">Back to Configuration</a>
+        </div>
+    </div>
+
+</main>
 </body>
 </html>

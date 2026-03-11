@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io/fs"
 	"log/slog"
 	"net/http"
 
@@ -31,7 +32,15 @@ func main() {
 
 	// Setup HTTP routes
 	mux := http.NewServeMux()
-	
+
+	// Static assets
+	staticFS, err := fs.Sub(templates.FS, "web/static")
+	if err != nil {
+		slog.Error("Failed to create static sub-filesystem", "err", err)
+	} else {
+		mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
+	}
+
 	// System routes
 	mux.HandleFunc("GET /{$}", systemHandler.HandleRoot)
 	mux.HandleFunc("GET /config", systemHandler.HandleConfig)

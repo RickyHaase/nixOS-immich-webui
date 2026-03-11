@@ -119,8 +119,7 @@ func (h *BackupHandler) HandleBackup(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	// Return immediately with "backup started" message that triggers status polling
-	htmlResponse := `<div style="padding: 10px; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 4px; margin: 10px 0;"
-	                      hx-get="/backupstatus" hx-trigger="load delay:500ms" hx-target="#backup-status" hx-swap="innerHTML">
+	htmlResponse := `<div class="alert alert-success" hx-get="/backupstatus" hx-trigger="load delay:500ms" hx-target="#backup-status" hx-swap="innerHTML" style="margin-top: 10px;">
 		<strong>Backup Started!</strong><br>
 		The backup is now running in the background. Progress will be shown below.
 	</div>`

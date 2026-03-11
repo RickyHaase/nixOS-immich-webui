@@ -37,7 +37,7 @@ func (h *SystemHandler) HandleRoot(w http.ResponseWriter, r *http.Request) {
 	// Convert to old format for template compatibility
 	cfg := cfgJSON.ToNixConfig()
 
-	tmpl, err := htmltemplate.ParseFS(h.templates, "web/index.html", "web/oauth_form.html")
+	tmpl, err := htmltemplate.ParseFS(h.templates, "web/base.html", "web/index.html", "web/oauth_form.html")
 	if err != nil {
 		slog.Error("| Error rendering template |", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -65,7 +65,7 @@ func (h *SystemHandler) HandleConfig(w http.ResponseWriter, r *http.Request) {
 	// Convert to old format for template compatibility
 	cfg := cfgJSON.ToNixConfig()
 
-	tmpl, err := htmltemplate.ParseFS(h.templates, "web/config.html", "web/oauth_form.html")
+	tmpl, err := htmltemplate.ParseFS(h.templates, "web/base.html", "web/config.html", "web/oauth_form.html", "web/email_form.html", "web/ml_form.html")
 	if err != nil {
 		slog.Error("| Error rendering config template |", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -181,7 +181,7 @@ func (h *SystemHandler) HandleSave(w http.ResponseWriter, r *http.Request) {
 	cfg := cfgJSON.ToNixConfig()
 
 
-	tmpl, err := htmltemplate.ParseFS(h.templates, "web/save.html")
+	tmpl, err := htmltemplate.ParseFS(h.templates, "web/base.html", "web/save.html")
 	if err != nil {
 		slog.Error("| Error rendering save template |", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -220,7 +220,7 @@ func (h *SystemHandler) HandleApply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl, err := htmltemplate.ParseFS(h.templates, "web/apply_success.html")
+	tmpl, err := htmltemplate.ParseFS(h.templates, "web/base.html", "web/apply_success.html")
 	if err != nil {
 		slog.Error("| Error parsing apply success template |", "err", err)
 		http.Error(w, "Rebuild completed but failed to render success page", http.StatusInternalServerError)
