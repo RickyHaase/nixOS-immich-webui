@@ -20,6 +20,9 @@ type ConfigVariables struct {
 			Token  string `json:"token"`
 		} `json:"cloudflared"`
 	} `json:"remoteAccess"`
+	Ente struct {
+		Enable bool `json:"enable"`
+	} `json:"ente"`
 }
 
 // NixConfig contains all NixOS config settings for template compatibility

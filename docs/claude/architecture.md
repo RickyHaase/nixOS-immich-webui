@@ -13,6 +13,7 @@ High-level system view
 - Core responsibilities:
   - Manage NixOS configuration (JSON-based config → `.nix` modules).
   - Control and monitor Immich containers.
+  - Control and monitor Ente Photos services (Museum API + Garage S3 storage).
   - Provide USB backup tooling for config and photo library.
   - Expose a small admin UI (works without JavaScript; HTMX for enhancement).
   - Execute privileged system operations (reboot, poweroff, apply NixOS).
@@ -60,7 +61,7 @@ Below are the main `internal/` packages and their responsibilities.
 - `internal/handlers`
   - Purpose: HTTP request handling and templating glue.
   - Key responsibilities:
-    - Route handlers for system, Immich, backup features (split into `SystemHandler`, `ImmichHandler`, `BackupHandler`).
+    - Route handlers for system, Immich, Ente, backup features (split into `SystemHandler`, `ImmichHandler`, `EnteHandler`, `BackupHandler`).
     - Parse form data, call `config`/`services`/`system` APIs, and render templates or HTMX fragments.
     - Maintain progressive-enhancement compatibility (handle both full-page and partial responses).
   - Where to change: new endpoints, routing, form parsing, or UI fragment rendering.
@@ -78,6 +79,7 @@ Below are the main `internal/` packages and their responsibilities.
   - Key responsibilities:
     - Execute `nixos-rebuild`/apply changes and provide rollback behavior.
     - Control Docker/Immich lifecycle (start/stop/update).
+    - Control Ente and Garage services (start/stop/restart/status).
     - Power management (`PowerOff`, `Reboot`) and disk operations (mount/unmount detection).
     - Discover eligible USB disks for backups.
   - Safety notes: This package runs system commands and must be audited carefully before change.
@@ -86,10 +88,10 @@ Below are the main `internal/` packages and their responsibilities.
   - Purpose: HTML templates embedded into the binary.
   - Key responsibilities:
     - Organize templates into full pages and HTMX fragments.
-    - Two main pages: `index.html` (home/backup/system dashboard) and `config.html` (configuration management).
+    - Three main pages: `index.html` (home/backup/system dashboard), `config.html` (configuration management), and `ente.html` (Ente admin panel).
     - Provide small reusable partials (status panels, forms, progress fragments, OAuth form).
   - Where to change: UI text, fragments used for HTMX partial updates.
-  - Key templates: `backup_status.html`, `backup_dashboard.html`, `email_form.html`, `ml_form.html`, `oauth_form.html`, `apply_success.html`, `save.html`.
+  - Key templates: `backup_status.html`, `backup_dashboard.html`, `email_form.html`, `ml_form.html`, `oauth_form.html`, `apply_success.html`, `save.html`, `ente_status.html`.
 
 Build modes and paths
 - Two build modes are supported via Go build tags:

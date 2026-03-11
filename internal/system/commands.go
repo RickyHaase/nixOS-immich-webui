@@ -104,6 +104,74 @@ func UpdateImmichContainer() error {
 	return nil
 }
 
+// GetEnteStatus returns the status of the ente.service systemd unit
+func GetEnteStatus() string {
+	slog.Debug("GetEnteStatus()")
+	cmd := exec.Command("systemctl", "show", "-p", "ActiveState", "--value", "ente.service")
+	output, err := cmd.Output()
+	if err != nil {
+		slog.Error("| Error getting status of ente.service |", "err", err)
+		return "Error getting status"
+	}
+
+	status := string(output)
+	switch status {
+	case "active\n":
+		return "Running"
+	case "inactive\n":
+		return "Stopped"
+	default:
+		slog.Error("| Unexpected status of ente.service |", "status", status)
+		return "Unknown state"
+	}
+}
+
+// EnteService controls the ente.service (start, stop, restart)
+func EnteService(command string) error {
+	slog.Debug("EnteService()", "command", command)
+	cmd := exec.Command("systemctl", command, "ente.service")
+	err := cmd.Run()
+	if err != nil {
+		slog.Error("Error running command against ente.service", "command", command, "err", err)
+		return err
+	}
+	return nil
+}
+
+// GetGarageStatus returns the status of the garage.service systemd unit
+func GetGarageStatus() string {
+	slog.Debug("GetGarageStatus()")
+	cmd := exec.Command("systemctl", "show", "-p", "ActiveState", "--value", "garage.service")
+	output, err := cmd.Output()
+	if err != nil {
+		slog.Error("| Error getting status of garage.service |", "err", err)
+		return "Error getting status"
+	}
+
+	status := string(output)
+	switch status {
+	case "active\n":
+		return "Running"
+	case "inactive\n":
+		return "Stopped"
+	default:
+		slog.Error("| Unexpected status of garage.service |", "status", status)
+		return "Unknown state"
+	}
+}
+
+// GarageService controls the garage.service (start, stop, restart)
+func GarageService(command string) error {
+	slog.Debug("GarageService()", "command", command)
+	cmd := exec.Command("systemctl", command, "garage.service")
+	err := cmd.Run()
+	if err != nil {
+		slog.Error("Error running command against garage.service", "command", command, "err", err)
+		return err
+	}
+	return nil
+}
+
 // GetEligibleDisks returns a list of USB disks with exFAT partitions eligible for backup
 func GetEligibleDisks() ([]config.EligibleDisk, error) {
 	eligibleDisks := []config.EligibleDisk{}

@@ -158,6 +158,8 @@ func (h *SystemHandler) HandleSave(w http.ResponseWriter, r *http.Request) {
 	} else {
 		cfgJSON.RemoteAccess.Cloudflared.Token = cloudflaredToken
 	}
+	// Preserve Ente config (managed via /ente page, not this form)
+	cfgJSON.Ente.Enable = currentCfg.Ente.Enable
 
 	t1, t2, err := config.GetLowerUpper(cfgJSON.System.UpgradeTime)
 	if err != nil {

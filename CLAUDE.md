@@ -24,9 +24,10 @@ High-level features
 -------------------
 - JSON-based NixOS configuration management
 - Immich container lifecycle controls (start/stop/update)
+- Ente Photos service management (Museum API + Garage S3) with dedicated admin panel
 - USB backup workflow (configs + photo library) with progress & history
 - Progressive-enhancement UI (works without JavaScript; HTMX for UX)
-- Two-page UI: home/dashboard (backup & system controls) and configuration
+- Three-page UI: home/dashboard, configuration, and Ente admin panel
 - OAuth authentication support (Cloudflare integration)
 - Cloudflare Tunnel and Tailscale integration for remote access
 
@@ -42,6 +43,8 @@ Where to find things
   - `docs/claude/security.md`
 - Troubleshooting and debug tips:
   - `docs/claude/troubleshooting.md`
+- Ente integration plan and architecture:
+  - `docs/claude/ente-integration-plan.md`
 - Example NixOS configs:
   - `example/etc/nixos/`
 - Source code (main packages):
@@ -72,7 +75,7 @@ Security & environment (short)
 ------------------------------
 - Default binding is `localhost:8000`. Use a reverse proxy (Caddy) for TLS and external access.
 - The service currently performs privileged operations and runs as root in production — treat this as an operational risk. See `docs/claude/security.md` for recommended hardening (reverse-proxy auth, OIDC, Tailscale gating, privilege separation).
-- Runtime assumptions: NixOS host, ZFS pool named `tank`, Immich docker-compose in `/tank/immich-config/` in production (dev mode uses `test/` paths).
+- Runtime assumptions: NixOS host, ZFS pool named `tank`, Immich docker-compose in `/tank/immich-config/`, Ente data in `/tank/ente/` in production (dev mode uses `test/` paths).
 
 Guidance for contributors
 -------------------------
