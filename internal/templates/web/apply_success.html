@@ -1,36 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configuration Applied - nixmich webui</title>
-    <style>
-        nav {
-            margin-bottom: 16px;
-            padding: 8px 0;
-            border-bottom: 1px solid #ddd;
-        }
-
-        nav a {
-            margin-right: 12px;
-            text-decoration: none;
-            color: #0066cc;
-        }
-
-        nav a:hover {
-            text-decoration: underline;
-        }
-    </style>
+    {{template "head" .}}
+    <title>Configuration Applied — nixmich</title>
 </head>
-<body>
-    <h1>Success</h1>
+<body class="app-shell">
 
-    <nav>
-        <a href="/">Main</a>
-        <a href="/config">Configuration</a>
-    </nav>
+{{template "topbar" .}}
 
-    <p>Rebuild completed successfully. Your NixOS configuration has been applied.</p>
-    <p><a href="/config">Return to Configuration</a> | <a href="/">Return to Main</a></p>
+<main class="page-content">
+
+    <div class="card">
+        <h2 class="card-title">Configuration Applied</h2>
+        <div class="alert alert-success" style="margin-bottom: 16px;">
+            <strong>&#10003; Rebuild completed successfully.</strong> Your NixOS configuration has been applied.
+        </div>
+        <div class="btn-group">
+            <a href="/config" class="btn btn-ghost">Return to Configuration</a>
+            <a href="/" class="btn btn-secondary">Return to Dashboard</a>
+        </div>
+    </div>
+
+</main>
 </body>
 </html>

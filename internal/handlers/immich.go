@@ -127,7 +127,7 @@ func (h *ImmichHandler) HandleEmailPost(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := tmpl.Execute(w, emailData); err != nil {
+	if err := tmpl.ExecuteTemplate(w, "email_form", emailData); err != nil {
 		slog.Error("| Error executing email form template |", "err", err)
 		http.Error(w, "Failed to render email form", http.StatusInternalServerError)
 		return
@@ -170,11 +170,11 @@ func (h *ImmichHandler) HandleMLModelPost(w http.ResponseWriter, r *http.Request
 
 	// Create struct for template data
 	mlData := struct {
-		ModelName string
-		Saved     bool
+		MLModel string
+		Saved   bool
 	}{
-		ModelName: immich.MachineLearning.Clip.ModelName,
-		Saved:     true,
+		MLModel: immich.MachineLearning.Clip.ModelName,
+		Saved:   true,
 	}
 
 	tmpl, err := htmltemplate.ParseFS(h.templates, "web/ml_form.html")
@@ -184,7 +184,7 @@ func (h *ImmichHandler) HandleMLModelPost(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := tmpl.Execute(w, mlData); err != nil {
+	if err := tmpl.ExecuteTemplate(w, "ml_form", mlData); err != nil {
 		slog.Error("| Error executing ML model form template |", "err", err)
 		http.Error(w, "Failed to render ML model form", http.StatusInternalServerError)
 		return
@@ -276,7 +276,7 @@ func (h *ImmichHandler) HandleOAuthPost(w http.ResponseWriter, r *http.Request) 
 		oauthData.OAuthPublicDomain = oauthData.OAuthPublicDomain[7:]
 	}
 
-	tmpl, err := htmltemplate.ParseFS(h.templates, "web/index.html", "web/oauth_form.html")
+	tmpl, err := htmltemplate.ParseFS(h.templates, "web/oauth_form.html")
 	if err != nil {
 		slog.Error("| Error parsing OAuth form template |", "err", err)
 		http.Error(w, "Failed to render OAuth form", http.StatusInternalServerError)
